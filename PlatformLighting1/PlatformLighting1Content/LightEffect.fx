@@ -61,6 +61,7 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 
 	//The angle of the pixel based on the normal map interpretation
 	float3 normal = (2.0f * (tex2D(NormalMapSampler, PSIn.TexCoord))) - 1.0f;
+	normal *= float3(1, -1, 1);
 	
 	//Current pixels' actual position	
 	float3 pixelPosition;
@@ -80,11 +81,10 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	
 	//Pretty sure this handles specular reflections			
 	float3 reflect = normalize(2.0 * amount * normal - lightDirNorm);
-	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.5 * 255), amount); 
+	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.015 * 255), amount); 
 	//Multiply the "10" here by a specular map value to be able to change the specularity of each pixel
 				
 	Output.Color = colorMap * coneAttenuation * lightColor * lightStrength + (specular * coneAttenuation * specularStrength);
-
 	//Output.Color = specMap;
 
 	return Output;

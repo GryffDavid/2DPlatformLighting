@@ -16,10 +16,13 @@ namespace PlatformLighting1
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap;
+        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, SpecMap;
 
-        VertexPositionColorTexture[] Vertices;
-        VertexBuffer VertexBuffer;
+        VertexPositionColorTexture[] LightVertices;
+        VertexBuffer LightVertexBuffer;
+
+        VertexPositionColorTexture[] EmissiveVertices;
+        VertexBuffer EmissiveVertexBuffer;
 
         #region Sprites
         Texture2D Sprite, Texture, NormalTexture;
@@ -31,7 +34,7 @@ namespace PlatformLighting1
 
         List<Light> LightList = new List<Light>();
 
-        Color AmbientLight = new Color(0.3f, 0.3f, 0.3f, 1f);
+        Color AmbientLight = new Color(0.25f, 0.25f, 0.25f, 1f);
         private float specularStrength = 1.0f;
 
         public static BlendState BlendBlack = new BlendState()
@@ -69,6 +72,7 @@ namespace PlatformLighting1
             ColorMap = new RenderTarget2D(GraphicsDevice, 1280, 720); 
             NormalMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             LightMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
+            FinalMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
 
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
@@ -80,16 +84,23 @@ namespace PlatformLighting1
 
             BlurEffect.Parameters["Projection"].SetValue(Projection);
 
-            Vertices = new VertexPositionColorTexture[4];
-            Vertices[0] = new VertexPositionColorTexture(new Vector3(-1, 1, 0), Color.White, new Vector2(0, 0));
-            Vertices[1] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, new Vector2(1, 0));
-            Vertices[2] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, new Vector2(0, 1));
-            Vertices[3] = new VertexPositionColorTexture(new Vector3(1, -1, 0), Color.White, new Vector2(1, 1));
-            VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColorTexture), Vertices.Length, BufferUsage.None);
-            VertexBuffer.SetData(Vertices);
+            LightVertices = new VertexPositionColorTexture[4];
+            LightVertices[0] = new VertexPositionColorTexture(new Vector3(-1, 1, 0), Color.White, new Vector2(0, 0));
+            LightVertices[1] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, new Vector2(1, 0));
+            LightVertices[2] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, new Vector2(0, 1));
+            LightVertices[3] = new VertexPositionColorTexture(new Vector3(1, -1, 0), Color.White, new Vector2(1, 1));
+            LightVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColorTexture), LightVertices.Length, BufferUsage.None);
+            LightVertexBuffer.SetData(LightVertices);
 
-            //Vertices2 = Vertices1;
-            //VertexBuffer2 = VertexBuffer1;
+            EmissiveVertices = new VertexPositionColorTexture[6];
+            EmissiveVertices[0] = new VertexPositionColorTexture(new Vector3(0, 0, 0), Color.White, new Vector2(0, 0));
+            EmissiveVertices[1] = new VertexPositionColorTexture(new Vector3(1280, 0, 0), Color.White, new Vector2(1, 0));
+            EmissiveVertices[2] = new VertexPositionColorTexture(new Vector3(1280, 720, 0), Color.White, new Vector2(1, 1));
+            EmissiveVertices[3] = new VertexPositionColorTexture(new Vector3(1280, 720, 0), Color.White, new Vector2(1, 1));
+            EmissiveVertices[4] = new VertexPositionColorTexture(new Vector3(0, 720, 0), Color.White, new Vector2(0, 1));
+            EmissiveVertices[5] = new VertexPositionColorTexture(new Vector3(0, 0, 0), Color.White, new Vector2(0, 0));
+            EmissiveVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColorTexture), EmissiveVertices.Length, BufferUsage.None);
+            EmissiveVertexBuffer.SetData(EmissiveVertices);
 
             Texture = Content.Load<Texture2D>("Texture");
             NormalTexture = Content.Load<Texture2D>("NormalTexture");
@@ -98,9 +109,9 @@ namespace PlatformLighting1
             {
                 Color = Color.White,
                 Active = true,
-                LightDecay = 800,
+                LightDecay = 8,
                 Power = 0.001f,
-                Position = new Vector3(100, 100, 200)
+                Position = new Vector3(100, 100, 150)
             });
         }
         
@@ -113,7 +124,7 @@ namespace PlatformLighting1
         {
             Vector3 LightPos;
 
-            LightPos = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 100f);
+            LightPos = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 5);
             LightList[0].Position = LightPos;
 
             base.Update(gameTime);
@@ -121,6 +132,31 @@ namespace PlatformLighting1
         
         protected override void Draw(GameTime gameTime)
         {
+            #region Emissive
+            #region Draw to emissive map
+            GraphicsDevice.SetRenderTarget(EmissiveMap);
+            GraphicsDevice.Clear(Color.Black);
+            spriteBatch.Begin();
+            spriteBatch.Draw(Sprite, new Vector2(100, 100), Color.White);
+            spriteBatch.End();
+            #endregion
+
+            #region Blur
+            GraphicsDevice.SetRenderTarget(BlurMap);
+            GraphicsDevice.Clear(Color.Black);
+
+            GraphicsDevice.SetVertexBuffer(EmissiveVertexBuffer);
+            BlurEffect.Parameters["InputTexture"].SetValue(EmissiveMap);
+            BlurEffect.CurrentTechnique = BlurEffect.Techniques["Technique1"];
+
+            foreach (EffectPass pass in BlurEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, EmissiveVertices, 0, 2);
+            }
+            #endregion
+            #endregion            
+
             #region Draw to ColorMap
             GraphicsDevice.SetRenderTarget(ColorMap);
             GraphicsDevice.Clear(Color.Transparent);
@@ -136,14 +172,22 @@ namespace PlatformLighting1
             spriteBatch.Draw(NormalTexture, NormalTexture.Bounds, Color.White);
             spriteBatch.End();
             #endregion
-                        
+
+            #region Draw to SpecMap
+            GraphicsDevice.SetRenderTarget(SpecMap);
+            GraphicsDevice.Clear(Color.Black);
+            spriteBatch.Begin();
+
+            spriteBatch.End();
+            #endregion
+
             #region Draw to LightMap
             GraphicsDevice.SetRenderTarget(LightMap);
             GraphicsDevice.Clear(Color.Transparent);
 
             foreach (Light light in LightList)
             {
-                GraphicsDevice.SetVertexBuffer(VertexBuffer);
+                GraphicsDevice.SetVertexBuffer(LightVertexBuffer);
 
                 LightEffect.Parameters["lightStrength"].SetValue(light.Power);
                 LightEffect.Parameters["lightPosition"].SetValue(light.Position);
@@ -164,18 +208,16 @@ namespace PlatformLighting1
 
                 GraphicsDevice.BlendState = BlendBlack;
 
-                GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, Vertices, 0, 2);
+                GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, LightVertices, 0, 2);
             }
 
             #endregion
-
-            //Draw everything to the backbuffer
-            GraphicsDevice.SetRenderTarget(null);
+            
+            #region Combine Normals, Lighting and Color
+            GraphicsDevice.SetRenderTarget(FinalMap);
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, null, null, null, LightCombined);
-            //RaysEffect.CurrentTechnique.Passes[0].Apply();
-            //spriteBatch.Draw(LightShadowMap, Vector2.Zero, Color.White);
 
             #region Draw the lightmap and color map combined
             LightCombined.CurrentTechnique = LightCombined.Techniques["DeferredCombined2"];
@@ -190,9 +232,25 @@ namespace PlatformLighting1
             LightCombined.CurrentTechnique.Passes[0].Apply();
 
             spriteBatch.Draw(ColorMap, Vector2.Zero, Color.White);
-            #endregion
-            spriteBatch.End();
 
+
+            #endregion
+
+            spriteBatch.End(); 
+            #endregion
+
+            #region Draw to the BackBuffer
+            GraphicsDevice.SetRenderTarget(null);
+            GraphicsDevice.Clear(Color.Black);
+
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+            spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
+            spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
+            spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
+
+            spriteBatch.End(); 
+            #endregion
+            
             base.Draw(gameTime);
         }
 
