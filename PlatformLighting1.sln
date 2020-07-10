@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C# Express 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlatformLighting1", "PlatformLighting1\PlatformLighting1\PlatformLighting1.csproj", "{7AE13AEC-B621-430D-93F8-73CB9F2EF4B3}"
+EndProject
+Project("{96E2B04D-8817-42C6-938A-82C39BA4D311}") = "PlatformLighting1Content", "PlatformLighting1\PlatformLighting1Content\PlatformLighting1Content.contentproj", "{FEA4DCEB-DD2C-4DFA-8931-E7BDAB1991FB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7AE13AEC-B621-430D-93F8-73CB9F2EF4B3}.Debug|x86.ActiveCfg = Debug|x86
+		{7AE13AEC-B621-430D-93F8-73CB9F2EF4B3}.Debug|x86.Build.0 = Debug|x86
+		{7AE13AEC-B621-430D-93F8-73CB9F2EF4B3}.Release|x86.ActiveCfg = Release|x86
+		{7AE13AEC-B621-430D-93F8-73CB9F2EF4B3}.Release|x86.Build.0 = Release|x86
+		{FEA4DCEB-DD2C-4DFA-8931-E7BDAB1991FB}.Debug|x86.ActiveCfg = Debug|x86
+		{FEA4DCEB-DD2C-4DFA-8931-E7BDAB1991FB}.Release|x86.ActiveCfg = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
