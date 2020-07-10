@@ -140,7 +140,7 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	float3 lightDirNorm = normalize(float3(light1Pos, 0) - float3(p.x, p.y, -25));	
 	float amount = max(dot(normal, lightDirNorm), 0);		
 	float3 reflect = normalize(2.0 * amount * normal - lightDirNorm);
-	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.01 * 255), amount); 
+	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.005 * 255), amount); 
 	setLuminance(light1Col, LightPower);
 
 	col += drawLight(p, light1Pos, light1Col, dist, LightSize, 1.0) * specular;

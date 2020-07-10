@@ -25,6 +25,8 @@ namespace PlatformLighting1
         VertexPositionColorTexture[] EmissiveVertices;
         VertexBuffer EmissiveVertexBuffer;
 
+        static Random Random = new Random();
+
         #region Sprites
         Texture2D Sprite, HealDrone, HealDroneEmissive, HealDroneNormal, Texture, NormalTexture;
         Texture2D CrepuscularLightTexture;
@@ -38,7 +40,7 @@ namespace PlatformLighting1
 
         List<Light> LightList = new List<Light>();
 
-        Color AmbientLight = new Color(0.25f, 0.25f, 0.25f, 1f);
+        Color AmbientLight = new Color(0.14f, 0.14f, 0.14f, 1f);
         private float specularStrength = 1.0f;
 
         List<Sprite> SpriteList = new List<Sprite>();
@@ -108,6 +110,16 @@ namespace PlatformLighting1
             SolidList.Add(new Solid(BoxTexture, new Vector2(500, 400), new Vector2(120, 40)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(1000, 500), new Vector2(70, 80)));
 
+            //for (int i = 0; i < 20; i++)
+            //{
+            //    SolidList.Add(new Solid(BoxTexture, new Vector2(Random.Next(0, 1280), Random.Next(0, 720)), new Vector2(Random.Next(16, 128), Random.Next(16, 128))));
+            //}
+
+            for (int i = 0; i < 40; i++)
+            {
+                SolidList.Add(new Solid(BoxTexture, new Vector2(150+(24*i), 250), new Vector2(8, 32)));
+            }
+
             SpriteList.Add(new Sprite(HealDrone, new Vector2(1280 / 2 - 32, 720 / 2 - 32), HealDroneNormal, HealDroneEmissive));
 
             BlurEffect = Content.Load<Effect>("Blur");
@@ -142,11 +154,12 @@ namespace PlatformLighting1
 
             LightList.Add(new Light()
             {
-                Color = new Color(141, 38, 10, 42),
+                //Color = new Color(141, 38, 10, 42),
+                Color = Color.White,
                 Active = true,
-                Power = 1.7f,
-                Position = new Vector3(100, 100, 250),
-                Size = 600
+                Power = 1.8f,
+                Position = new Vector3(100, 100, 100),
+                Size = 2000
             });
         }
         
@@ -159,7 +172,7 @@ namespace PlatformLighting1
         {
             Vector3 LightPos;
 
-            LightPos = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 25);
+            LightPos = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 250);
             LightList[0].Position = LightPos;
 
             foreach (Sprite sprite in SpriteList)
@@ -381,6 +394,10 @@ namespace PlatformLighting1
             {
                 sprite.Draw(spriteBatch, Color.Black);
             }
+            foreach (Solid solid in SolidList)
+            {
+                solid.Draw(spriteBatch);
+            }
             spriteBatch.End();
             #endregion
 
@@ -405,6 +422,11 @@ namespace PlatformLighting1
             //{
             //    sprite.Draw(spriteBatch, Color.White);
             //}
+
+            foreach (Solid solid in SolidList)
+            {
+                solid.Draw(spriteBatch);
+            }
             spriteBatch.End(); 
             #endregion
 

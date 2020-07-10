@@ -42,7 +42,7 @@ namespace PlatformLighting1
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Texture, DestinationRectangle, Color.Red);
+            spriteBatch.Draw(Texture, DestinationRectangle, Color.Black);
         }
     }
 }
