@@ -8,6 +8,9 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using FarseerPhysics.Dynamics;
+using FarseerPhysics.Factories;
+using PlatformLighting1.PhysicsObjects;
 
 namespace PlatformLighting1
 {    
@@ -26,6 +29,11 @@ namespace PlatformLighting1
         VertexBuffer EmissiveVertexBuffer;
 
         static Random Random = new Random();
+
+        World World;
+        DrawablePhysicsObject Floor;
+        List<DrawablePhysicsObject> CrateList;
+        
 
         #region Sprites
         Texture2D Sprite, HealDrone, HealDroneEmissive, HealDroneNormal, Texture, NormalTexture;
@@ -48,6 +56,8 @@ namespace PlatformLighting1
         List<myRay> RayList = new List<myRay>();
 
         BasicEffect BasicEffect;
+
+        KeyboardState PreviousKeyboardState, CurrentKeyboardState;
 
         public static BlendState BlendBlack = new BlendState()
         {
@@ -213,6 +223,14 @@ namespace PlatformLighting1
                 Position = new Vector3(1280, 720, 250),
                 Size = 1200
             });
+
+
+            World = new World(new Vector2(0, 9.8f));
+            Floor = new DrawablePhysicsObject(World, BoxTexture, new Vector2(1280, 100), 1000);
+            Floor.Position = new Vector2(1280 / 2, 720 - 50);
+            Floor.body.BodyType = BodyType.Static;
+
+            CrateList = new List<DrawablePhysicsObject>();
         }
         
         protected override void UnloadContent()
@@ -222,6 +240,8 @@ namespace PlatformLighting1
         
         protected override void Update(GameTime gameTime)
         {
+            CurrentKeyboardState = Keyboard.GetState();
+
             foreach (Sprite sprite in SpriteList)
             {
                 sprite.Update(gameTime);
@@ -231,7 +251,15 @@ namespace PlatformLighting1
             {
                 solid.Update(gameTime);
             }
-            
+
+            //if (CurrentKeyboardState.IsKeyDown(Keys.Space))
+            //{
+            //    SpawnCrate();
+            //}
+
+            PreviousKeyboardState = CurrentKeyboardState;
+
+            //World.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
 
             base.Update(gameTime);
         }
@@ -274,7 +302,7 @@ namespace PlatformLighting1
             spriteBatch.Draw(Texture, Texture.Bounds, Color.White);
             foreach (Sprite sprite in SpriteList)
             {
-                sprite.Draw(spriteBatch, Color.White);
+                sprite.Draw(spriteBatch, Color.Pink);
             }
             spriteBatch.End();
             #endregion
@@ -402,11 +430,6 @@ namespace PlatformLighting1
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
             spriteBatch.Draw(FinalMap2, FinalMap2.Bounds, Color.White);
-
-            //foreach (Sprite sprite in SpriteList)
-            //{
-            //    sprite.Draw(spriteBatch, Color.White);
-            //}
 
             foreach (Solid solid in SolidList)
             {
@@ -564,6 +587,15 @@ namespace PlatformLighting1
                 ColorDestinationBlend = Blend.One,
                 ColorBlendFunction = BlendFunction.Max
             };
-        } 
+        }
+
+        private void SpawnCrate()
+        {
+            DrawablePhysicsObject crate;
+            crate = new DrawablePhysicsObject(World, BoxTexture, new Vector2(50.0f, 50.0f), 5f);
+            crate.Position = new Vector2(Random.Next(50, GraphicsDevice.Viewport.Width - 50), 1);
+
+            CrateList.Add(crate);
+        }
     }
 }
