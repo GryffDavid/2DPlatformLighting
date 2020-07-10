@@ -11,7 +11,8 @@ namespace PlatformLighting1
     class Sprite
     {
         public Vector2 Position;
-        Texture2D Texture, Normal, Emissive;
+        public Texture2D Texture, Normal, Emissive;
+        public float Depth;
         
         public Sprite(Texture2D texture, Vector2 position, Texture2D normal, Texture2D emissive)
         {
@@ -19,6 +20,7 @@ namespace PlatformLighting1
             Texture = texture;
             Normal = normal;
             Emissive = emissive;
+            Depth = position.Y / 720f;
         }
 
         public void LoadContent(ContentManager content)

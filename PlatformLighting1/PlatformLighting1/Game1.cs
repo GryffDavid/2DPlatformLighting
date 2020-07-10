@@ -40,10 +40,9 @@ namespace PlatformLighting1
         Texture2D Laser;
         #endregion
 
-
         #region Effects
         Effect BlurEffect, LightCombined, LightEffect;
-        Effect RaysEffect;
+        Effect RaysEffect, DepthEffect;
         #endregion
 
         List<Light> LightList = new List<Light>();
@@ -158,6 +157,9 @@ namespace PlatformLighting1
             BasicEffect.Projection = Matrix.CreateOrthographicOffCenter(0, 1280, 720, 0, 0, 1);
             BasicEffect.VertexColorEnabled = true;
 
+            DepthEffect = Content.Load<Effect>("Depth");
+            DepthEffect.Parameters["Projection"].SetValue(Projection);
+
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             Sprite = Content.Load<Texture2D>("Sprite");
@@ -186,6 +188,10 @@ namespace PlatformLighting1
             }
 
             SpriteList.Add(new Sprite(HealDrone, new Vector2(1280 / 2 - 32, 720 / 2 - 32), HealDroneNormal, HealDroneEmissive));
+            
+            SpriteList.Add(new Sprite(HealDrone, new Vector2(100, 100), HealDroneNormal, HealDroneEmissive));
+            SpriteList.Add(new Sprite(HealDrone, new Vector2(800, 500), HealDroneNormal, HealDroneEmissive));
+
             
             BlurEffect = Content.Load<Effect>("Blur");
             LightCombined = Content.Load<Effect>("LightCombined");
@@ -536,8 +542,19 @@ namespace PlatformLighting1
             #region Draw to DepthMap
             GraphicsDevice.SetRenderTarget(DepthMap);
             GraphicsDevice.Clear(Color.Black);
-            spriteBatch.Begin();
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+            foreach (Sprite sprite in SpriteList)
+            {
+                DepthEffect.Parameters["Texture"].SetValue(sprite.Texture);
+                DepthEffect.Parameters["depth"].SetValue(sprite.Depth);
 
+                foreach (EffectPass pass in DepthEffect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    sprite.Draw(spriteBatch, Color.Red);
+                    //graphics.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, spriteVertices, 0, 4, spriteIndices, 0, 2, VertexPositionColorTexture.VertexDeclaration);
+                }
+            }
             spriteBatch.End();
             #endregion
             
@@ -561,6 +578,8 @@ namespace PlatformLighting1
                     LightEffect.Parameters["LightSize"].SetValue(light.Size);
                     LightEffect.Parameters["NormalMap"].SetValue(NormalMap);
                     LightEffect.Parameters["ColorMap"].SetValue(ColorMap);
+                    LightEffect.Parameters["DepthMap"].SetValue(DepthMap);
+                    LightEffect.Parameters["lightDepth"].SetValue(0.1f);                    
 
                     LightEffect.CurrentTechnique = LightEffect.Techniques["DeferredPointLight"];
                     LightEffect.CurrentTechnique.Passes[0].Apply();

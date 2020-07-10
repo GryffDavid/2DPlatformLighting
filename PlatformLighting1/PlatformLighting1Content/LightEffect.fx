@@ -28,6 +28,16 @@ sampler ShadowMapSampler = sampler_state {
 	AddressV = mirror;
 };
 
+Texture DepthMap;
+sampler DepthMapSampler = sampler_state {
+	texture = <DepthMap>;
+	magfilter = LINEAR;
+	minfilter = LINEAR;
+	mipfilter = LINEAR;
+	AddressU = mirror;
+	AddressV = mirror;
+};
+
 struct VertexToPixel
 {
 	float4 Position : POSITION;
@@ -116,6 +126,8 @@ float3 halfVec = float3(0, 0, 1);
 float2 offset = float2(0.5/1280.0, 0.5/720.0);
 float specVal = 0.005;
 
+float lightDepth;
+
 PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 {	
 	PixelToFrame Output = (PixelToFrame)0;
@@ -125,8 +137,20 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	float2 p = (PSIn.TexCoord.xy) * iResolution.xy;
 
 
+	float4 depthMap = tex2D(DepthMapSampler, PSIn.TexCoord);
+	normalize(depthMap);
+
 	//The angle of the pixel based on the normal map interpretation
-	float3 normal = (2.0f * (tex2D(NormalMapSampler, PSIn.TexCoord + offset))) - 1.0f;
+	float3 normal;
+
+	if (depthMap.r > lightDepth && depthMap.a == 1)
+	normal = float4(0,0,0,1);
+	else
+	normal = (2.0f * (tex2D(NormalMapSampler, PSIn.TexCoord))) - 1.0f;
+
+
+	//The angle of the pixel based on the normal map interpretation
+	//float3 normal = (2.0f * (tex2D(NormalMapSampler, PSIn.TexCoord + offset))) - 1.0f;
 	normal *= float3(1, -1, 1);
 
 	
