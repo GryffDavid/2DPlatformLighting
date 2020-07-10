@@ -170,7 +170,7 @@ namespace PlatformLighting1
             BoxTexture = Content.Load<Texture2D>("Box");
             Laser = Content.Load<Texture2D>("Beam");
 
-            SolidList.Add(new Solid(BoxTexture, new Vector2(250, 250), new Vector2(80, 80)));
+            SolidList.Add(new Solid(BoxTexture, new Vector2(400, 300), new Vector2(80, 80)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(100, 250), new Vector2(50, 20)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(500, 400), new Vector2(120, 40)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(1000, 500), new Vector2(70, 80)));
@@ -361,7 +361,7 @@ namespace PlatformLighting1
                                                             MathHelper.ToDegrees(-(float)Math.Atan2(Direction.Y, Direction.X)) + 30),
                                                             new Vector2(8, 12), new Vector2(100, 200), 1f, false,
                                                             new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.25f, 0.25f),
-                                                            Color.Yellow, Color.Orange, 0f, 0.05f, 100, 7, false, new Vector2(0, 1080), true,
+                                                            Color.Yellow, Color.Orange, 0f, 0.05f, 100, 7, false, new Vector2(0, 720), true,
                                                             1.0f, null, null, null, null, null, true, new Vector2(0.25f, 0.25f), false, false,
                                                             null, false, false, false);
 
@@ -373,7 +373,7 @@ namespace PlatformLighting1
                                                     MathHelper.ToDegrees(-(float)Math.Atan2(Direction.Y, Direction.X)) + 5),
                                                     new Vector2(12, 15), new Vector2(80, 150), 1f, false,
                                                     new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.35f, 0.35f),
-                                                    Color.LightYellow, Color.Yellow, 0f, 0.05f, 100, 7, false, new Vector2(0, 1080), true,
+                                                    Color.LightYellow, Color.Yellow, 0f, 0.05f, 100, 7, false, new Vector2(0, 720), true,
                                                     1.0f, null, null, null, null, null, true, new Vector2(0.18f, 0.18f), false, false,
                                                     null, false, false, false);
 
@@ -467,7 +467,7 @@ namespace PlatformLighting1
                 sprite.DrawEmissive(spriteBatch);
             }
 
-            spriteBatch.Draw(Laser, new Vector2(0, 80), new Color(255, 180, 0, 2));
+            //spriteBatch.Draw(Laser, new Vector2(0, 80), new Color(255, 180, 0, 2));
 
             foreach (Emitter emitter in EmitterList)
             {
@@ -483,8 +483,6 @@ namespace PlatformLighting1
                     lightning.Draw(GraphicsDevice);
                 }
             }
-
-           
 
             spriteBatch.End();
             #endregion
@@ -556,6 +554,22 @@ namespace PlatformLighting1
                 }
             }
             spriteBatch.End();
+
+
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+            foreach (Solid sprite in SolidList)
+            {
+                DepthEffect.Parameters["Texture"].SetValue(sprite.Texture);
+                DepthEffect.Parameters["depth"].SetValue(sprite.Depth);
+
+                foreach (EffectPass pass in DepthEffect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    sprite.Draw(spriteBatch, Color.Red);
+                    //graphics.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, spriteVertices, 0, 4, spriteIndices, 0, 2, VertexPositionColorTexture.VertexDeclaration);
+                }
+            }
+            spriteBatch.End();
             #endregion
             
             #region Draw to LightMap
@@ -579,7 +593,7 @@ namespace PlatformLighting1
                     LightEffect.Parameters["NormalMap"].SetValue(NormalMap);
                     LightEffect.Parameters["ColorMap"].SetValue(ColorMap);
                     LightEffect.Parameters["DepthMap"].SetValue(DepthMap);
-                    LightEffect.Parameters["lightDepth"].SetValue(0.1f);                    
+                    LightEffect.Parameters["lightDepth"].SetValue(0.5f);                    
 
                     LightEffect.CurrentTechnique = LightEffect.Techniques["DeferredPointLight"];
                     LightEffect.CurrentTechnique.Passes[0].Apply();
@@ -596,9 +610,9 @@ namespace PlatformLighting1
             spriteBatch.Begin();
             spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
             spriteBatch.End();
-            
+
             #endregion
-            
+
             #region Combine Normals, Lighting and Color
             GraphicsDevice.SetRenderTarget(FinalMap);
             GraphicsDevice.Clear(Color.DeepSkyBlue);
@@ -673,7 +687,7 @@ namespace PlatformLighting1
 
                 spriteBatch.Begin();
                 spriteBatch.Draw(CrepuscularLightTexture, new Rectangle((int)(light.Position.X), (int)(light.Position.Y), CrepuscularLightTexture.Width / 3, CrepuscularLightTexture.Height / 3), null,
-                                     LightList[CrepLightList.IndexOf(light)].Color, 0, new Vector2(CrepuscularLightTexture.Width / 2, CrepuscularLightTexture.Height / 2), SpriteEffects.None, 0);
+                                 LightList[CrepLightList.IndexOf(light)].Color, 0, new Vector2(CrepuscularLightTexture.Width / 2, CrepuscularLightTexture.Height / 2), SpriteEffects.None, 0);
                 spriteBatch.End();
 
                 #region Buffer1
@@ -685,6 +699,7 @@ namespace PlatformLighting1
                     RaysEffect.Parameters["exposure"].SetValue(light.Exposure);
                     RaysEffect.Parameters["density"].SetValue(light.Density);
                     RaysEffect.Parameters["weight"].SetValue(light.Weight);
+                    RaysEffect.Parameters["DepthMap"].SetValue(DepthMap);
 
                     spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
                     RaysEffect.CurrentTechnique.Passes[0].Apply();

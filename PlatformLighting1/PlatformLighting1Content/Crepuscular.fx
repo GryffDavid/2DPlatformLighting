@@ -19,6 +19,17 @@ sampler OccMapSampler = sampler_state
         Texture = <OccMap>;     
 };
 
+Texture DepthMap;
+sampler DepthMapSampler = sampler_state 
+{
+	texture = <DepthMap>;
+	magfilter = LINEAR;
+	minfilter = LINEAR;
+	mipfilter = LINEAR;
+	AddressU = mirror;
+	AddressV = mirror;
+};
+
 float2 LightPosition = float2(0.51, 0.5);
 float decay= 0.9999;
 float exposure=0.13;
@@ -38,20 +49,47 @@ float4 PixelShaderFunction(float2 texCoord : TEXCOORD0) : COLOR0
 	float illuminationDecay = 1.0;
 
 	float4 color = tex2D(ColorSampler, tc.xy);// * 0.2;
-
-
+		
 	for (int i = 0; i < NUM_SAMPLES; i++)
 	{
 		tc -= deltaTexCoord;	
-		float4 sample = tex2D(OccMapSampler, tc) * tex2D(UserMapSampler, tc) * 0.2;			
+		float4 sample;
+		float4 thing;
+
+		//sample = float4(1,1,1,1) * tex2D(UserMapSampler, tc) * 0.2;
+		//sample = float4(0,0,0,1) * tex2D(UserMapSampler, tc) * 0.2;
+
+		//if (tex2D(DepthMapSampler, texCoord).r > 0.5f)
+		//{
+		//	sample = tex2D(OccMapSampler, tc) * tex2D(UserMapSampler, tc) * 0.2;
+		//}
+		//else
+		//{
+		//	sample = float4(1,1,1,1) * tex2D(UserMapSampler, tc) * 0.2;
+		//}
+
+		//sample = tex2D(OccMapSampler, tc) * tex2D(UserMapSampler, tc) * 0.2;
+
+		if (tex2D(DepthMapSampler, tc).r > 0.5)
+		{
+			thing = tex2D(OccMapSampler, tc);
+		}
+		else
+		{
+			thing = float4(1,1,1,1);
+		}
+
+		sample = thing * tex2D(UserMapSampler, tc) * 0.2;
+
 		sample *= illuminationDecay * weight;
 		color += sample;//  * float4(1,0,0,1); Multiply by colour here to change light colour
 		illuminationDecay *= decay;
 	}
 
 	float4 realColor = tex2D(ColorSampler, texCoord.xy + offset);
-
+	
 	return ((float4((float3(color.r, color.g, color.b) * exposure), 1)));// + (realColor * (1.1)));	
+	
 }
 
 technique Technique1

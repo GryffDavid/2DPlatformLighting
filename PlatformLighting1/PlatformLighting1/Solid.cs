@@ -10,18 +10,20 @@ namespace PlatformLighting1
 {
     class Solid
     {
-        Texture2D Texture;
+        public Texture2D Texture;
         Vector2 Position, Size;
         public Rectangle DestinationRectangle;
         BoundingBox BoundingRectangle;
         public VertexPositionColor[] vertices = new VertexPositionColor[4];
         PolygonShadow shadow;
+        public float Depth;
 
         public Solid(Texture2D texture, Vector2 position, Vector2 size)
         {
             Texture = texture;
             Position = position;
             Size = size;
+            Depth = Position.Y / 720f;
         }
 
         public void Update(GameTime gameTime)

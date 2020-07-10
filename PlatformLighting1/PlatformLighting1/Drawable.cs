@@ -28,7 +28,7 @@ namespace PlatformLighting1
                 }
 
                 _MaxY = value;
-                DrawDepth = MaxY / 1080.0f;
+                DrawDepth = MaxY / 720.0f;
             }
         }
 

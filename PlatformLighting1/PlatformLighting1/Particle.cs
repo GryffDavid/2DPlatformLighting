@@ -350,7 +350,7 @@ namespace PlatformLighting1
 
                 if (SortDepth == true)
                 {
-                    DrawDepth = DestinationRectangle.Center.Y / 1080.0f;
+                    DrawDepth = DestinationRectangle.Center.Y / 720.0f;
                 }
 
                 if (CurrentColor != EndColor)
