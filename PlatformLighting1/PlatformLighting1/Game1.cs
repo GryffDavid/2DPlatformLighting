@@ -40,7 +40,7 @@ namespace PlatformLighting1
 
         List<Light> LightList = new List<Light>();
 
-        Color AmbientLight = new Color(0.11f, 0.11f, 0.11f, 1f);
+        Color AmbientLight = new Color(0.25f, 0.25f, 0.25f, 1f);
 
         List<Sprite> SpriteList = new List<Sprite>();
         List<Solid> SolidList = new List<Solid>();
@@ -68,6 +68,7 @@ namespace PlatformLighting1
             Content.RootDirectory = "Content";
             graphics.PreferredBackBufferWidth = 1280;
             graphics.PreferredBackBufferHeight = 720;
+            //graphics.IsFullScreen = true;
         }
         
         protected override void Initialize()
@@ -118,7 +119,7 @@ namespace PlatformLighting1
 
             for (int i = 0; i < 40; i++)
             {
-                SolidList.Add(new Solid(BoxTexture, new Vector2(150+(24*i), 250), new Vector2(8, 32)));
+                SolidList.Add(new Solid(BoxTexture, new Vector2(150+(24*i), 250), new Vector2(4, 32)));
             }
 
             SpriteList.Add(new Sprite(HealDrone, new Vector2(1280 / 2 - 32, 720 / 2 - 32), HealDroneNormal, HealDroneEmissive));
@@ -183,6 +184,35 @@ namespace PlatformLighting1
                 Size = 600
             });
 
+            LightList.Add(new Light()
+            {
+                //Color = new Color(141, 38, 10, 42),
+                Color = Color.LimeGreen,
+                Active = true,
+                Power = 1.8f,
+                Position = new Vector3(1000, 350, 100),
+                Size = 400
+            });
+
+            LightList.Add(new Light()
+            {
+                //Color = new Color(141, 38, 10, 42),
+                Color = Color.Purple,
+                Active = true,
+                Power = 0.2f,
+                Position = new Vector3(1280/2, 50, 250),
+                Size = 600
+            });
+
+            LightList.Add(new Light()
+            {
+                //Color = new Color(141, 38, 10, 42),
+                Color = Color.Goldenrod,
+                Active = true,
+                Power = 0.8f,
+                Position = new Vector3(1280, 720, 250),
+                Size = 1200
+            });
         }
         
         protected override void UnloadContent()
@@ -348,9 +378,10 @@ namespace PlatformLighting1
             {
                 sprite.Draw(spriteBatch, Color.Black);
             }
+
             foreach (Solid solid in SolidList)
             {
-                solid.Draw(spriteBatch);
+                solid.Draw(spriteBatch, Color.Black);
             }
             spriteBatch.End();
             #endregion
@@ -379,7 +410,7 @@ namespace PlatformLighting1
 
             foreach (Solid solid in SolidList)
             {
-                solid.Draw(spriteBatch);
+                solid.Draw(spriteBatch, Color.Black);
             }
             spriteBatch.End(); 
             #endregion
