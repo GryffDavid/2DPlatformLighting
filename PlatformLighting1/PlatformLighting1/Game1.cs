@@ -40,6 +40,7 @@ namespace PlatformLighting1
         Texture2D Laser;
         #endregion
 
+
         #region Effects
         Effect BlurEffect, LightCombined, LightEffect;
         Effect RaysEffect;
