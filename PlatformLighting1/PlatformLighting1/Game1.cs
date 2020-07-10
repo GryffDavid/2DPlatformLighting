@@ -19,26 +19,25 @@ namespace PlatformLighting1
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, FinalMap2, SpecMap, DepthMap, ShadowMap, ShadowMap2;
+        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, FinalMap2, SpecMap, DepthMap, ShadowMap;
         RenderTarget2D CrepLightMap, CrepColorMap;
 
         VertexPositionColorTexture[] LightVertices;
-        VertexBuffer LightVertexBuffer;
-
         VertexPositionColorTexture[] EmissiveVertices;
-        VertexBuffer EmissiveVertexBuffer;
 
         static Random Random = new Random();
 
         World World;
         DrawablePhysicsObject Floor;
         List<DrawablePhysicsObject> CrateList;
-        
+
+        List<ToonLightning> LightningList = new List<ToonLightning>();   
 
         #region Sprites
         Texture2D Sprite, HealDrone, HealDroneEmissive, HealDroneNormal, Texture, NormalTexture;
         Texture2D CrepuscularLightTexture;
         Texture2D BoxTexture;
+        Texture2D Laser;
         #endregion
 
         #region Effects
@@ -48,8 +47,8 @@ namespace PlatformLighting1
 
         List<Light> LightList = new List<Light>();
 
-        Color AmbientLight = new Color(0.25f, 0.25f, 0.25f, 1f);
-
+        Color AmbientLight = new Color(0.25f, 0.35f, 0.35f, 1f);
+    
         List<Sprite> SpriteList = new List<Sprite>();
         List<Solid> SolidList = new List<Solid>();
         List<PolygonShadow> ShadowList = new List<PolygonShadow>();
@@ -58,6 +57,8 @@ namespace PlatformLighting1
         BasicEffect BasicEffect;
 
         KeyboardState PreviousKeyboardState, CurrentKeyboardState;
+
+        Vector2 SpritePos;
 
         public static BlendState BlendBlack = new BlendState()
         {
@@ -83,7 +84,7 @@ namespace PlatformLighting1
         
         protected override void Initialize()
         {
-
+            SpritePos = new Vector2(100, 100);
             base.Initialize();
         }
         
@@ -105,7 +106,7 @@ namespace PlatformLighting1
             ShadowMap = new RenderTarget2D(GraphicsDevice, 1280, 720);//, false, SurfaceFormat.Rgba64, DepthFormat.None, 8, RenderTargetUsage.PreserveContents);
 
             BasicEffect = new BasicEffect(GraphicsDevice);
-            BasicEffect.Projection = Matrix.CreateOrthographicOffCenter(0, 1280, 720, 0, 0, 10);
+            BasicEffect.Projection = Matrix.CreateOrthographicOffCenter(0, 1280, 720, 0, 0, 1);
             BasicEffect.VertexColorEnabled = true;
 
             spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -116,6 +117,7 @@ namespace PlatformLighting1
             HealDroneNormal = Content.Load<Texture2D>("HealDroneNormal");
             HealDroneEmissive = Content.Load<Texture2D>("HealDroneEmissive");
             BoxTexture = Content.Load<Texture2D>("Box");
+            Laser = Content.Load<Texture2D>("Beam");
 
             SolidList.Add(new Solid(BoxTexture, new Vector2(250, 250), new Vector2(80, 80)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(100, 250), new Vector2(50, 20)));
@@ -129,7 +131,7 @@ namespace PlatformLighting1
 
             for (int i = 0; i < 40; i++)
             {
-                SolidList.Add(new Solid(BoxTexture, new Vector2(150+(24*i), 250), new Vector2(4, 32)));
+                SolidList.Add(new Solid(BoxTexture, new Vector2(150 + (24 * i), 250), new Vector2(4, 32)));
             }
 
             SpriteList.Add(new Sprite(HealDrone, new Vector2(1280 / 2 - 32, 720 / 2 - 32), HealDroneNormal, HealDroneEmissive));
@@ -148,8 +150,6 @@ namespace PlatformLighting1
             LightVertices[1] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, new Vector2(1, 0));
             LightVertices[2] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, new Vector2(0, 1));
             LightVertices[3] = new VertexPositionColorTexture(new Vector3(1, -1, 0), Color.White, new Vector2(1, 1));
-            LightVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColorTexture), LightVertices.Length, BufferUsage.None);
-            LightVertexBuffer.SetData(LightVertices);
 
             EmissiveVertices = new VertexPositionColorTexture[6];
             EmissiveVertices[0] = new VertexPositionColorTexture(new Vector3(0, 0, 0), Color.White, new Vector2(0, 0));
@@ -158,8 +158,6 @@ namespace PlatformLighting1
             EmissiveVertices[3] = new VertexPositionColorTexture(new Vector3(1280, 720, 0), Color.White, new Vector2(1, 1));
             EmissiveVertices[4] = new VertexPositionColorTexture(new Vector3(0, 720, 0), Color.White, new Vector2(0, 1));
             EmissiveVertices[5] = new VertexPositionColorTexture(new Vector3(0, 0, 0), Color.White, new Vector2(0, 0));
-            EmissiveVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColorTexture), EmissiveVertices.Length, BufferUsage.None);
-            EmissiveVertexBuffer.SetData(EmissiveVertices);
 
             Texture = Content.Load<Texture2D>("Texture");
             NormalTexture = Content.Load<Texture2D>("NormalTexture");
@@ -167,60 +165,62 @@ namespace PlatformLighting1
             LightList.Add(new Light()
             {
                 //Color = new Color(141, 38, 10, 42),
-                Color = Color.CornflowerBlue,
+                //Color = new Color(10, 25, 70, 5),
+                //Color = Color.LightGreen,
+                Color = Color.Plum,
                 Active = true,
-                Power = 1.8f,
+                Power = 0.7f,
                 Position = new Vector3(100, 100, 100),
-                Size = 400
-            });
-
-            LightList.Add(new Light()
-            {
-                Color = new Color(141, 38, 10, 42),
-                //Color = Color.White,
-                Active = true,
-                Power = 1.8f,
-                Position = new Vector3(200, 100, 100),
                 Size = 800
             });
 
-            LightList.Add(new Light()
-            {
-                //Color = new Color(141, 38, 10, 42),
-                Color = Color.White,
-                Active = true,
-                Power = 1.8f,
-                Position = new Vector3(500, 600, 100),
-                Size = 600
-            });
+            //LightList.Add(new Light()
+            //{
+            //    Color = new Color(141, 38, 10, 42),
+            //    //Color = Color.White,
+            //    Active = true,
+            //    Power = 1.8f,
+            //    Position = new Vector3(200, 100, 100),
+            //    Size = 800
+            //});
+
+            //LightList.Add(new Light()
+            //{
+            //    //Color = new Color(141, 38, 10, 42),
+            //    Color = Color.White,
+            //    Active = true,
+            //    Power = 1.8f,
+            //    Position = new Vector3(500, 600, 100),
+            //    Size = 600
+            //});
+
+            //LightList.Add(new Light()
+            //{
+            //    //Color = new Color(141, 38, 10, 42),
+            //    Color = Color.LimeGreen,
+            //    Active = true,
+            //    Power = 1.8f,
+            //    Position = new Vector3(1000, 350, 100),
+            //    Size = 400
+            //});
+
+            //LightList.Add(new Light()
+            //{
+            //    //Color = new Color(141, 38, 10, 42),
+            //    Color = Color.Purple,
+            //    Active = true,
+            //    Power = 0.2f,
+            //    Position = new Vector3(1280 / 2, 50, 250),
+            //    Size = 600
+            //});
 
             LightList.Add(new Light()
             {
-                //Color = new Color(141, 38, 10, 42),
-                Color = Color.LimeGreen,
-                Active = true,
-                Power = 1.8f,
-                Position = new Vector3(1000, 350, 100),
-                Size = 400
-            });
-
-            LightList.Add(new Light()
-            {
-                //Color = new Color(141, 38, 10, 42),
-                Color = Color.Purple,
-                Active = true,
-                Power = 0.2f,
-                Position = new Vector3(1280/2, 50, 250),
-                Size = 600
-            });
-
-            LightList.Add(new Light()
-            {
-                //Color = new Color(141, 38, 10, 42),
+                //Color = new Color(0, 180, 255, 42),
                 Color = Color.Goldenrod,
                 Active = true,
                 Power = 0.8f,
-                Position = new Vector3(1280, 720, 250),
+                Position = new Vector3(1280 - 700, 720 - 180, 250),
                 Size = 1200
             });
 
@@ -242,6 +242,21 @@ namespace PlatformLighting1
         {
             CurrentKeyboardState = Keyboard.GetState();
 
+            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+            {
+                Vector2 thing = new Vector2(232, 462) - new Vector2(Mouse.GetState().X, Mouse.GetState().Y);
+
+                int numSeg = (int)MathHelper.Clamp(GetEven((int)thing.Length() / 10), 4, (float)double.PositiveInfinity);
+                LightningList.Clear();
+                ToonLightning newLightning = new ToonLightning(numSeg, 15, new Vector2(232, 462), new Vector2(Mouse.GetState().X, Mouse.GetState().Y), new Vector2(80, 100));
+                LightningList.Add(newLightning);
+            }
+
+            foreach (ToonLightning bolt in LightningList)
+            {
+                bolt.Update(gameTime);
+            }
+
             foreach (Sprite sprite in SpriteList)
             {
                 sprite.Update(gameTime);
@@ -257,6 +272,10 @@ namespace PlatformLighting1
             //    SpawnCrate();
             //}
 
+            SpritePos += new Vector2(
+                (float)Math.Sin(2*(float)gameTime.TotalGameTime.TotalSeconds), 
+                (float)Math.Cos(4*(float)gameTime.TotalGameTime.TotalSeconds))*7;
+
             PreviousKeyboardState = CurrentKeyboardState;
 
             //World.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
@@ -269,21 +288,33 @@ namespace PlatformLighting1
             #region Emissive
             #region Draw to emissive map
             GraphicsDevice.SetRenderTarget(EmissiveMap);
-            GraphicsDevice.Clear(Color.Black);
-            spriteBatch.Begin();
-            spriteBatch.Draw(Sprite, new Vector2(100, 100), Color.White);
+            GraphicsDevice.Clear(Color.Transparent);
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, null, null, RasterizerState.CullNone);
+            spriteBatch.Draw(Sprite, SpritePos, new Color(255, 255, 255, 2));
             foreach (Sprite sprite in SpriteList)
             {
                 sprite.DrawEmissive(spriteBatch);
             }
+
+            spriteBatch.Draw(Laser, new Vector2(0, 80), new Color(255, 180, 0, 2));
+           
+            foreach (EffectPass pass in BasicEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+
+                foreach (ToonLightning lightning in LightningList)
+                {
+                    lightning.Draw(GraphicsDevice);
+                }
+            }
+
             spriteBatch.End();
             #endregion
             
             #region Blur
             GraphicsDevice.SetRenderTarget(BlurMap);
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Color.Transparent);
 
-            GraphicsDevice.SetVertexBuffer(EmissiveVertexBuffer);
             BlurEffect.Parameters["InputTexture"].SetValue(EmissiveMap);
             BlurEffect.CurrentTechnique = BlurEffect.Techniques["Technique1"];
 
@@ -304,6 +335,7 @@ namespace PlatformLighting1
             {
                 sprite.Draw(spriteBatch, Color.Pink);
             }
+
             spriteBatch.End();
             #endregion
 
@@ -311,13 +343,13 @@ namespace PlatformLighting1
             GraphicsDevice.SetRenderTarget(NormalMap);
             GraphicsDevice.Clear(Color.Transparent);
             spriteBatch.Begin();
-
             spriteBatch.Draw(NormalTexture, NormalTexture.Bounds, Color.White);
-            spriteBatch.Draw(Sprite, new Vector2(100, 100), Color.Black);
+            spriteBatch.Draw(Sprite, SpritePos, Color.Black);
             foreach (Sprite sprite in SpriteList)
             {
                 sprite.DrawNormal(spriteBatch);
             }
+
             spriteBatch.End();
             #endregion
 
@@ -338,8 +370,6 @@ namespace PlatformLighting1
             #endregion
             
             #region Draw to LightMap
-            
-
             GraphicsDevice.SetRenderTarget(LightMap);
             GraphicsDevice.Clear(Color.Transparent);
 
@@ -348,7 +378,6 @@ namespace PlatformLighting1
                 MyShadow(light);
 
                 GraphicsDevice.SetRenderTarget(LightMap);
-                //GraphicsDevice.SetVertexBuffer(LightVertexBuffer);
 
                 LightEffect.Parameters["ShadowMap"].SetValue(ShadowMap);
 
@@ -359,21 +388,26 @@ namespace PlatformLighting1
                 LightEffect.Parameters["NormalMap"].SetValue(NormalMap);
                 LightEffect.Parameters["ColorMap"].SetValue(ColorMap);
 
-                LightEffect.CurrentTechnique = LightEffect.Techniques["DeferredPointLight"];                
-                
+                LightEffect.CurrentTechnique = LightEffect.Techniques["DeferredPointLight"];
                 LightEffect.CurrentTechnique.Passes[0].Apply();
 
                 GraphicsDevice.BlendState = BlendBlack;
-
                 GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, LightVertices, 0, 2);
-                //LightVertexBuffer.SetData(LightVertices);
-
+                
             }
+
+            //TODO: This is here to have the emissive sprites also "cast" light on the LightMap. 
+            //Not sure if it looks as good as I'd like though
+            //may need to be removed
+            spriteBatch.Begin();
+            spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
+            spriteBatch.End();
+            
             #endregion
             
             #region Combine Normals, Lighting and Color
             GraphicsDevice.SetRenderTarget(FinalMap);
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.DeepSkyBlue);
 
             spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, null, null, null, LightCombined);
 
@@ -406,23 +440,29 @@ namespace PlatformLighting1
             {
                 sprite.Draw(spriteBatch, Color.Black);
             }
-
+            
             foreach (Solid solid in SolidList)
             {
                 solid.Draw(spriteBatch, Color.Black);
-            }
+            }            
             spriteBatch.End();
             #endregion
 
             GraphicsDevice.SetRenderTarget(FinalMap2);
             GraphicsDevice.Clear(Color.Black);
-            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
-            
+            //This used to be drawn with Additive Blending. Now just using lower alpha values when drawing sprites instead.
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+
             spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
+
+            //DRAW SOLIDS HERE INSTEAD OF IN THE CrepColorMap IF THE EMISSIVE SHOULD BE DRAWN OVER THE SOLIDS
+            //foreach (Solid solid in SolidList)
+            //{
+            //    solid.Draw(spriteBatch, Color.Black);
+            //}
+
             spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
             spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
-            spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
-            
             spriteBatch.End();
 
             #region Crepuscular ColorMap
@@ -430,7 +470,7 @@ namespace PlatformLighting1
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
             spriteBatch.Draw(FinalMap2, FinalMap2.Bounds, Color.White);
-
+            
             foreach (Solid solid in SolidList)
             {
                 solid.Draw(spriteBatch, Color.Black);
@@ -442,17 +482,49 @@ namespace PlatformLighting1
             GraphicsDevice.SetRenderTarget(null);
             GraphicsDevice.Clear(Color.Black);
 
-            RaysEffect.Parameters["ColorMap"].SetValue(CrepColorMap);
-            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
-            RaysEffect.CurrentTechnique.Passes[0].Apply();
-            spriteBatch.Draw(CrepLightMap, FinalMap.Bounds, Color.White);
-            spriteBatch.End();
+            #region Draw Maps on the side
+            if (Keyboard.GetState().IsKeyDown(Keys.S))
+            {
+                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+                spriteBatch.Draw(EmissiveMap, new Rectangle(0, 0, 320, 180), Color.White);
+                spriteBatch.Draw(BlurMap, new Rectangle(0, 180, 320, 180), Color.White);
+                spriteBatch.Draw(NormalMap, new Rectangle(0, 360, 320, 180), Color.White);
+                spriteBatch.Draw(SpecMap, new Rectangle(0, 540, 320, 180), Color.White);
+
+                spriteBatch.Draw(DepthMap, new Rectangle(320, 0, 320, 180), Color.White);
+                spriteBatch.Draw(LightMap, new Rectangle(320, 180, 320, 180), Color.White);
+                spriteBatch.Draw(FinalMap, new Rectangle(320, 360, 320, 180), Color.White);
+                spriteBatch.Draw(CrepLightMap, new Rectangle(320, 540, 320, 180), Color.White);
+
+                spriteBatch.Draw(CrepColorMap, new Rectangle(640, 0, 320, 180), Color.White);
+                spriteBatch.Draw(ColorMap, new Rectangle(640, 180, 320, 180), Color.White);
+                spriteBatch.Draw(FinalMap2, new Rectangle(640, 360, 320, 180), Color.White);
+                spriteBatch.Draw(ShadowMap, new Rectangle(640, 540, 320, 180), Color.White);
+                
+                spriteBatch.End();
+
+                RaysEffect.Parameters["ColorMap"].SetValue(DepthMap);
+                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+                RaysEffect.CurrentTechnique.Passes[0].Apply();
+                spriteBatch.Draw(CrepLightMap, new Rectangle(960, 0, 320, 180), Color.White);
+                spriteBatch.End();
+            }
+            else
+            {
+                RaysEffect.Parameters["ColorMap"].SetValue(CrepColorMap);
+                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+                RaysEffect.CurrentTechnique.Passes[0].Apply();
+                spriteBatch.Draw(CrepLightMap, FinalMap.Bounds, Color.White);
+                spriteBatch.End();
+            }
+            #endregion
+
 
 
             //GraphicsDevice.SetRenderTarget(null);
             //GraphicsDevice.Clear(Color.White);
             //spriteBatch.Begin();
-            //    spriteBatch.Draw(ShadowMap, ShadowMap.Bounds, Color.White);
+            //spriteBatch.Draw(ShadowMap, ShadowMap.Bounds, Color.White);
             //spriteBatch.End();
             #endregion
             
@@ -481,7 +553,10 @@ namespace PlatformLighting1
             Vector3 LightPos;
 
             LightPos = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 250);
-            LightList[0].Position = LightPos;
+            LightList[0].Position = new Vector3(SpritePos.X, SpritePos.Y, 0) + new Vector3(16, 16, 0);
+            //LightList[0].Position = LightPos;
+
+            //LightList[LightList.Count - 1].Position = LightPos;
 
             Vector2 SourcePosition = new Vector2(light.Position.X, light.Position.Y);
 
@@ -494,8 +569,16 @@ namespace PlatformLighting1
 
                 for (int i = 0; i < solid.vertices.Count(); i++)
                 {
+                    if (CurrentKeyboardState.IsKeyDown(Keys.P) &&
+                        PreviousKeyboardState.IsKeyUp(Keys.P))
+                    {
+                        int stop = 10;
+                    }
+
                     lightVector = solid.vertices[i].Position - new Vector3(SourcePosition, 0);
                     //lightVector.Normalize();
+
+                    //lightVector *= light.Size;
 
                     int nextIndex, prevIndex;
 
@@ -504,9 +587,19 @@ namespace PlatformLighting1
 
                     check1 = solid.vertices[nextIndex].Position - new Vector3(SourcePosition, 0);
                     check2 = solid.vertices[prevIndex].Position - new Vector3(SourcePosition, 0);
-
+                    
                     thing = Vector3.Cross(lightVector, check1);
                     thing2 = Vector3.Cross(lightVector, check2);
+
+                    //NOTE: THIS LINE SEEMS TO FIX THE 0 VALUE CHECK VARIABLE RESULTING IN A DISAPPEARING SHADOW
+                    thing.Normalize();
+
+                    //SHADOWS DON'T SHOW UP IF THE Y OR X VALUES FOR THE THING AND CHECK ARE THE SAME.
+                    //i.e. check1.y = 158 AND thing1.y = 158. Then the next if evaluates to false and a ray isn't added.
+                    //meaning that there's a blank side for the polygon
+                    //The Check variables use the previous and next vertex positions to calculate a vector
+                    //This can end up with the vector having a 0 in it if the light lines up with a side
+                    //This makes the cross product values messed up
 
                     if ((thing.Z <= 0 && thing2.Z <= 0) ||
                         (thing.Z >= 0 && thing2.Z >= 0))
@@ -596,6 +689,18 @@ namespace PlatformLighting1
             crate.Position = new Vector2(Random.Next(50, GraphicsDevice.Viewport.Width - 50), 1);
 
             CrateList.Add(crate);
+        }
+
+        private int GetEven(int num)
+        {
+            if (num % 2 == 0)
+            {
+                return num;
+            }
+            else
+            {
+                return num + 1;
+            }
         }
     }
 }

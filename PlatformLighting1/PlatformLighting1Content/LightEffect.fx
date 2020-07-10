@@ -74,8 +74,6 @@ float circleDist(float2 p, float radius)
 	return length(p) - radius;
 }
 
-
-
 //////////////////////////////
 //Light and Shadow Functions//
 //////////////////////////////

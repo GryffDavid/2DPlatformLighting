@@ -43,7 +43,7 @@ namespace PlatformLighting1
 
         public void DrawEmissive(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Emissive, Position, Color.White);
+            spriteBatch.Draw(Emissive, Position, new Color(255, 255, 255, 2));
         }
     }
 }
