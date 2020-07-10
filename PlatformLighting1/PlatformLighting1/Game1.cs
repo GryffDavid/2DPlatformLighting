@@ -30,7 +30,7 @@ namespace PlatformLighting1
         List<Vector4> Boxes = new List<Vector4>();
 
         #region Sprites
-        Texture2D Sprite, HealDrone, HealDroneEmissive, HealDroneNormal, Texture, NormalTexture;
+        Texture2D Sprite, HealDrone, HealDroneEmissive, HealDroneNormal, Texture, NormalTexture, SpecularTexture;
         Texture2D CrepuscularLightTexture;
         #endregion
 
@@ -74,6 +74,11 @@ namespace PlatformLighting1
             Boxes.Add(new Vector4(800, 100, 100, 25));
             Boxes.Add(new Vector4(100, 600, 100, 25));
 
+
+            //for (int i = 0; i < 30; i++)
+            //{
+            //    Boxes.Add(new Vector4(Random.Next(0, 1280), Random.Next(0, 720), Random.Next(20, 100), Random.Next(5, 30)));
+            //}
             base.Initialize();
         }
         
@@ -134,6 +139,7 @@ namespace PlatformLighting1
 
             Texture = Content.Load<Texture2D>("Texture");
             NormalTexture = Content.Load<Texture2D>("NormalTexture");
+            SpecularTexture = Content.Load<Texture2D>("SpecularTexture");
 
             LightList.Add(new Light()
             {
@@ -266,7 +272,7 @@ namespace PlatformLighting1
             GraphicsDevice.SetRenderTarget(SpecMap);
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
-
+            spriteBatch.Draw(SpecularTexture, SpecularTexture.Bounds, Color.White);
             spriteBatch.End();
             #endregion
 
@@ -299,6 +305,8 @@ namespace PlatformLighting1
 
                 LightEffect.Parameters["NormalMap"].SetValue(NormalMap);
                 LightEffect.Parameters["ColorMap"].SetValue(ColorMap);
+                LightEffect.Parameters["SpecularMap"].SetValue(SpecMap);
+
                 LightEffect.CurrentTechnique.Passes[0].Apply();
 
                 GraphicsDevice.BlendState = BlendBlack;

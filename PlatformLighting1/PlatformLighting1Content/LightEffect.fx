@@ -18,6 +18,16 @@ sampler ColorMapSampler = sampler_state {
 	AddressV = mirror;
 };
 
+Texture SpecularMap;
+sampler SpecularMapSampler = sampler_state {
+	texture = <SpecularMap>;
+	magfilter = LINEAR;
+	minfilter = LINEAR;
+	mipfilter = LINEAR;
+	AddressU = mirror;
+	AddressV = mirror;
+};
+
 struct VertexToPixel
 {
 	float4 Position : POSITION;
@@ -55,7 +65,7 @@ float3 LightPosition;
 float4 LightColor, AmbientColor;
 float LightPower, LightSize;
 
-float4 myBoxes[4];
+float4 myBoxes[34];
 
 //////////////////
 //Dist functions//
@@ -79,14 +89,23 @@ float boxDist(float2 p, float2 size)
 
 float sceneDist(float2 p)
 {
-	float b1 =  boxDist(p - float2(200, 200), float2(100, 25));
-	float b2 =  boxDist(p - float2(500, 200), float2(100, 25));
-	float b3 =  boxDist(p - float2(400, 350), float2(100, 25));
-	float b4 =  boxDist(p - float2(100, 600), float2(100, 25));
+	float b2 = 0;
+	float b1 =  boxDist(p - float2(myBoxes[0].x, myBoxes[0].y), float2(myBoxes[0].z, myBoxes[0].w));
+	float m = b1;
 
-	float m = merge(b1, b2);
-	m = merge(m, b3);
-	m = merge(m, b4);
+	for (int i = 1; i < 4; i++)
+	{
+		b2 =  boxDist(p - float2(myBoxes[i].x, myBoxes[i].y), float2(myBoxes[i].z, myBoxes[i].w));
+		m = merge(m, b2);
+	}
+
+	//float b2 =  boxDist(p - float2(myBoxes[1].x, myBoxes[1].y), float2(myBoxes[1].z, myBoxes[1].w));
+	//float b3 =  boxDist(p - float2(myBoxes[2].x, myBoxes[2].y), float2(myBoxes[2].z, myBoxes[2].w));
+	//float b4 =  boxDist(p - float2(myBoxes[3].x, myBoxes[3].y), float2(myBoxes[3].z, myBoxes[3].w));
+
+	//float m = merge(b1, b2);
+	//m = merge(m, b3);
+	//m = merge(m, b4);
 
 	return m;
 }
@@ -177,6 +196,8 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	PixelToFrame Output = (PixelToFrame)0;
 	
 	float4 colorMap = tex2D(ColorMapSampler, PSIn.TexCoord);	
+	float4 specValue = tex2D(SpecularMapSampler, PSIn.TexCoord);
+	normalize(specValue);
 		
 	float2 p = PSIn.TexCoord.xy * iResolution.xy;
 
@@ -199,7 +220,7 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	float3 lightDirNorm = normalize(float3(light1Pos, 0) - float3(p.x, p.y, -25));	
 	float amount = max(dot(normal, lightDirNorm), 0);		
 	float3 reflect = normalize(2.0 * amount * normal - lightDirNorm);
-	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.01 * 255), amount); 
+	float specular = min(pow(saturate(dot(reflect, halfVec)), 2.0), amount); 
 	setLuminance(light1Col, LightPower);
 
 	col += drawLight(p, light1Pos, light1Col, dist, LightSize, 1.0) * specular;
