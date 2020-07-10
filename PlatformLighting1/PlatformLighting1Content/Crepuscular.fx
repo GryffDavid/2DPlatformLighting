@@ -13,7 +13,7 @@ sampler ColorSampler = sampler_state
         Texture = <ColorMap>;     
 };
 
-float2 LightPosition = float2(0.5, 0.5);
+float2 LightPosition = float2(0.51, 0.5);
 float decay= 0.9999;
 float exposure=0.13;
 float density=0.826;

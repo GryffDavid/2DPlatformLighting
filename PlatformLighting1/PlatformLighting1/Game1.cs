@@ -78,6 +78,7 @@ namespace PlatformLighting1
             LightMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             FinalMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             FinalMap2 = new RenderTarget2D(GraphicsDevice, 1280, 720);
+            SpecMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             CrepLightMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             CrepColorMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
 
@@ -156,7 +157,7 @@ namespace PlatformLighting1
             GraphicsDevice.SetRenderTarget(EmissiveMap);
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
-            spriteBatch.Draw(Sprite, new Vector2(1280/2, 720/2), Color.White);
+            spriteBatch.Draw(Sprite, new Vector2(100, 100), Color.White);
             spriteBatch.End();
             #endregion
             
@@ -263,6 +264,7 @@ namespace PlatformLighting1
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
             spriteBatch.Draw(CrepuscularLightTexture, Vector2.Zero, Color.White);
+            spriteBatch.Draw(ColorMap, ColorMap.Bounds, Color.Black);
             foreach (Sprite sprite in SpriteList)
             {
                 sprite.Draw(spriteBatch, Color.Black);
@@ -273,7 +275,7 @@ namespace PlatformLighting1
             GraphicsDevice.SetRenderTarget(FinalMap2);
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
-
+            
             spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
             spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
             spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
@@ -300,12 +302,7 @@ namespace PlatformLighting1
 
             RaysEffect.CurrentTechnique.Passes[0].Apply();
             spriteBatch.Draw(CrepLightMap, FinalMap.Bounds, Color.White);
-
             
-            //spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
-            //spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
-            //spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
-
             spriteBatch.End(); 
             #endregion
             

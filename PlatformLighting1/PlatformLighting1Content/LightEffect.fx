@@ -81,7 +81,7 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	
 	//Pretty sure this handles specular reflections			
 	float3 reflect = normalize(2.0 * amount * normal - lightDirNorm);
-	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.015 * 255), amount); 
+	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.0005 * 255), amount); 
 	//Multiply the "10" here by a specular map value to be able to change the specularity of each pixel
 				
 	Output.Color = colorMap * coneAttenuation * lightColor * lightStrength + (specular * coneAttenuation * specularStrength);
