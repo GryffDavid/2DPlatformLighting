@@ -147,7 +147,9 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	
 	col = lerp(col, col, clamp(-dist, 0.0, 1.0));
 	
-    Output.Color = clamp(col, 0.0, 1.0) * tex2D(ShadowMapSampler, PSIn.TexCoord);
+	
+	Output.Color = clamp(col, 0.0, 1.0) * tex2D(ShadowMapSampler, PSIn.TexCoord);
+
 
 	return Output;
 }

@@ -16,7 +16,7 @@ namespace PlatformLighting1
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, FinalMap2, SpecMap, DepthMap, ShadowMap;
+        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, FinalMap2, SpecMap, DepthMap, ShadowMap, ShadowMap2;
         RenderTarget2D CrepLightMap, CrepColorMap;
 
         VertexPositionColorTexture[] LightVertices;
@@ -40,8 +40,7 @@ namespace PlatformLighting1
 
         List<Light> LightList = new List<Light>();
 
-        Color AmbientLight = new Color(0.14f, 0.14f, 0.14f, 1f);
-        private float specularStrength = 1.0f;
+        Color AmbientLight = new Color(0.11f, 0.11f, 0.11f, 1f);
 
         List<Sprite> SpriteList = new List<Sprite>();
         List<Solid> SolidList = new List<Solid>();
@@ -83,14 +82,16 @@ namespace PlatformLighting1
             BlurMap = new RenderTarget2D(GraphicsDevice, 1280, 720); 
             ColorMap = new RenderTarget2D(GraphicsDevice, 1280, 720); 
             NormalMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
-            LightMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
+            LightMap = new RenderTarget2D(GraphicsDevice, 1280, 720, false, SurfaceFormat.Rgba64, DepthFormat.None, 8, RenderTargetUsage.PreserveContents);
+
             FinalMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             FinalMap2 = new RenderTarget2D(GraphicsDevice, 1280, 720);
             SpecMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             CrepLightMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             CrepColorMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             DepthMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
-            ShadowMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
+
+            ShadowMap = new RenderTarget2D(GraphicsDevice, 1280, 720);//, false, SurfaceFormat.Rgba64, DepthFormat.None, 8, RenderTargetUsage.PreserveContents);
 
             BasicEffect = new BasicEffect(GraphicsDevice);
             BasicEffect.Projection = Matrix.CreateOrthographicOffCenter(0, 1280, 720, 0, 0, 10);
@@ -155,12 +156,33 @@ namespace PlatformLighting1
             LightList.Add(new Light()
             {
                 //Color = new Color(141, 38, 10, 42),
-                Color = Color.White,
+                Color = Color.CornflowerBlue,
                 Active = true,
                 Power = 1.8f,
                 Position = new Vector3(100, 100, 100),
-                Size = 2000
+                Size = 400
             });
+
+            LightList.Add(new Light()
+            {
+                Color = new Color(141, 38, 10, 42),
+                //Color = Color.White,
+                Active = true,
+                Power = 1.8f,
+                Position = new Vector3(200, 100, 100),
+                Size = 800
+            });
+
+            LightList.Add(new Light()
+            {
+                //Color = new Color(141, 38, 10, 42),
+                Color = Color.White,
+                Active = true,
+                Power = 1.8f,
+                Position = new Vector3(500, 600, 100),
+                Size = 600
+            });
+
         }
         
         protected override void UnloadContent()
@@ -170,72 +192,16 @@ namespace PlatformLighting1
         
         protected override void Update(GameTime gameTime)
         {
-            Vector3 LightPos;
-
-            LightPos = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 250);
-            LightList[0].Position = LightPos;
-
             foreach (Sprite sprite in SpriteList)
             {
                 sprite.Update(gameTime);
             }
-            Vector2 SourcePosition = new Vector2(LightPos.X, LightPos.Y);
-
-            RayList.Clear();
-            ShadowList.Clear();
 
             foreach (Solid solid in SolidList)
             {
                 solid.Update(gameTime);
-
-                Vector3 lightVector, check1, check2, thing, thing2;
-
-                for (int i = 0; i < solid.vertices.Count(); i++)
-                {
-                    lightVector = solid.vertices[i].Position - new Vector3(SourcePosition, 0);
-
-                    int nextIndex, prevIndex;
-
-                    nextIndex = Wrap(i + 1, 4);
-                    prevIndex = Wrap(i - 1, 4);
-
-                    check1 = solid.vertices[nextIndex].Position - new Vector3(SourcePosition, 0);
-                    check2 = solid.vertices[prevIndex].Position - new Vector3(SourcePosition, 0);
-
-                    thing = Vector3.Cross(lightVector, check1);
-                    thing2 = Vector3.Cross(lightVector, check2);
-
-                    if ((thing.Z <= 0 && thing2.Z <= 0) ||
-                        (thing.Z >= 0 && thing2.Z >= 0))
-                    {
-                        RayList.Add(new myRay() { direction = lightVector, position = solid.vertices[i].Position, length = 10f });
-                    }
-                }
-
-                if (RayList.Count > 1)
-                {
-                    int p = RayList.Count() - 2;
-
-                    VertexPositionColor[] vertices = new VertexPositionColor[6];
-
-                    vertices[0].Position = RayList[p].position;
-                    vertices[1].Position = RayList[p].position + (RayList[p].direction * 1000);
-                    vertices[2].Position = RayList[p + 1].position + (RayList[p + 1].direction * 1000);
-
-                    vertices[3].Position = RayList[p + 1].position + (RayList[p + 1].direction * 1000);
-                    vertices[4].Position = RayList[p + 1].position;
-                    vertices[5].Position = RayList[p].position;
-
-                    vertices[0].Color = Color.Black;
-                    vertices[1].Color = Color.Black;
-                    vertices[2].Color = Color.Black;
-                    vertices[3].Color = Color.Black;
-                    vertices[4].Color = Color.Black;
-                    vertices[5].Color = Color.Black;
-
-                    ShadowList.Add(new PolygonShadow() { Vertices = vertices });
-                }
             }
+            
 
             base.Update(gameTime);
         }
@@ -312,51 +278,39 @@ namespace PlatformLighting1
 
             spriteBatch.End();
             #endregion
-
-            #region Draw to ShadowMap
-            GraphicsDevice.SetRenderTarget(ShadowMap);
-            GraphicsDevice.Clear(Color.White);
-            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
-            BasicEffect.Techniques[0].Passes[0].Apply();
-            foreach (PolygonShadow shadow in ShadowList)
-            {
-                shadow.Draw(GraphicsDevice);
-            }
-            #endregion
-
+            
             #region Draw to LightMap
+            
+
             GraphicsDevice.SetRenderTarget(LightMap);
             GraphicsDevice.Clear(Color.Transparent);
 
             foreach (Light light in LightList)
             {
-                GraphicsDevice.SetVertexBuffer(LightVertexBuffer);
+                MyShadow(light);
+
+                GraphicsDevice.SetRenderTarget(LightMap);
+                //GraphicsDevice.SetVertexBuffer(LightVertexBuffer);
+
+                LightEffect.Parameters["ShadowMap"].SetValue(ShadowMap);
 
                 LightEffect.Parameters["LightPosition"].SetValue(light.Position);
                 LightEffect.Parameters["LightColor"].SetValue(ColorToVector(light.Color));
                 LightEffect.Parameters["LightPower"].SetValue(light.Power);
                 LightEffect.Parameters["LightSize"].SetValue(light.Size);
-
-                
-
-                LightEffect.CurrentTechnique = LightEffect.Techniques["DeferredPointLight"];
-
-                //LightEffect.Parameters["ambientColor"].SetValue(AmbientLight.ToVector4());
-
-                LightEffect.Parameters["ShadowMap"].SetValue(ShadowMap);
                 LightEffect.Parameters["NormalMap"].SetValue(NormalMap);
                 LightEffect.Parameters["ColorMap"].SetValue(ColorMap);
+
+                LightEffect.CurrentTechnique = LightEffect.Techniques["DeferredPointLight"];                
+                
                 LightEffect.CurrentTechnique.Passes[0].Apply();
 
                 GraphicsDevice.BlendState = BlendBlack;
 
                 GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, LightVertices, 0, 2);
+                //LightVertexBuffer.SetData(LightVertices);
+
             }
-
-            
-            
-
-
             #endregion
             
             #region Combine Normals, Lighting and Color
@@ -429,19 +383,23 @@ namespace PlatformLighting1
             }
             spriteBatch.End(); 
             #endregion
-
+            
             #region Draw to the BackBuffer
             GraphicsDevice.SetRenderTarget(null);
             GraphicsDevice.Clear(Color.Black);
+
             RaysEffect.Parameters["ColorMap"].SetValue(CrepColorMap);
             spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
-            //spriteBatch.Draw(ShadowMap, ShadowMap.Bounds, Color.White);
-            ////spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
-            ////spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
             RaysEffect.CurrentTechnique.Passes[0].Apply();
             spriteBatch.Draw(CrepLightMap, FinalMap.Bounds, Color.White);
-
             spriteBatch.End();
+
+
+            //GraphicsDevice.SetRenderTarget(null);
+            //GraphicsDevice.Clear(Color.White);
+            //spriteBatch.Begin();
+            //    spriteBatch.Draw(ShadowMap, ShadowMap.Bounds, Color.White);
+            //spriteBatch.End();
             #endregion
             
             base.Draw(gameTime);
@@ -463,5 +421,118 @@ namespace PlatformLighting1
         {
             return ((index % n) + n) % n;
         }
+
+        public void DrawShadows(Light light)
+        {
+            Vector3 LightPos;
+
+            LightPos = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 250);
+            LightList[0].Position = LightPos;
+
+            Vector2 SourcePosition = new Vector2(light.Position.X, light.Position.Y);
+
+            RayList.Clear();
+            ShadowList.Clear();
+
+            foreach (Solid solid in SolidList)
+            {
+                Vector3 lightVector, check1, check2, thing, thing2;
+
+                for (int i = 0; i < solid.vertices.Count(); i++)
+                {
+                    lightVector = solid.vertices[i].Position - new Vector3(SourcePosition, 0);
+                    //lightVector.Normalize();
+
+                    int nextIndex, prevIndex;
+
+                    nextIndex = Wrap(i + 1, 4);
+                    prevIndex = Wrap(i - 1, 4);
+
+                    check1 = solid.vertices[nextIndex].Position - new Vector3(SourcePosition, 0);
+                    check2 = solid.vertices[prevIndex].Position - new Vector3(SourcePosition, 0);
+
+                    thing = Vector3.Cross(lightVector, check1);
+                    thing2 = Vector3.Cross(lightVector, check2);
+
+                    if ((thing.Z <= 0 && thing2.Z <= 0) ||
+                        (thing.Z >= 0 && thing2.Z >= 0))
+                    {
+                        RayList.Add(new myRay() { direction = lightVector, position = solid.vertices[i].Position, length = 10f });
+                    }                    
+                }
+
+                if (RayList.Count > 1)
+                {
+                    int p = RayList.Count() - 2;
+
+                    VertexPositionColor[] vertices = new VertexPositionColor[6];
+
+                    vertices[0].Position = RayList[p].position;
+                    vertices[1].Position = RayList[p].position + (RayList[p].direction * 100);
+                    vertices[2].Position = RayList[p + 1].position + (RayList[p + 1].direction * 100);
+
+                    vertices[3].Position = RayList[p + 1].position + (RayList[p + 1].direction * 100);
+                    vertices[4].Position = RayList[p + 1].position;
+                    vertices[5].Position = RayList[p].position;
+
+                    vertices[0].Color = Color.Black;
+                    vertices[1].Color = Color.Black;
+                    vertices[2].Color = Color.Black;
+                    vertices[3].Color = Color.Black;
+                    vertices[4].Color = Color.Black;
+                    vertices[5].Color = Color.Black;
+
+                    ShadowList.Add(new PolygonShadow() { Vertices = vertices });
+                }
+            }
+        }
+
+        public Texture2D MyShadow(Light light)
+        {
+            GraphicsDevice.SetRenderTarget(ShadowMap);
+            GraphicsDevice.Clear(Color.White);
+
+            DrawShadows(light);
+
+            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+            GraphicsDevice.BlendState = PSBlendState.Multiply;
+            BasicEffect.Techniques[0].Passes[0].Apply();
+
+            foreach (PolygonShadow shadow in ShadowList)
+            {
+                shadow.Draw(GraphicsDevice);
+            }
+
+            return ShadowMap;
+        }
+
+
+        public static class PSBlendState
+        {
+            public static BlendState Multiply = new BlendState
+            {
+                ColorSourceBlend = Blend.DestinationColor,
+                ColorDestinationBlend = Blend.Zero,
+                ColorBlendFunction = BlendFunction.Add
+            };
+            public static BlendState Screen = new BlendState
+            {
+                ColorSourceBlend = Blend.InverseDestinationColor,
+                ColorDestinationBlend = Blend.One,
+                ColorBlendFunction = BlendFunction.Add
+            };
+            public static BlendState Darken = new BlendState
+            {
+                ColorSourceBlend = Blend.One,
+                ColorDestinationBlend = Blend.One,
+                ColorBlendFunction = BlendFunction.Min
+            };
+            public static BlendState Lighten = new BlendState
+            {
+                ColorSourceBlend = Blend.One,
+                ColorDestinationBlend = Blend.One,
+                ColorBlendFunction = BlendFunction.Max
+            };
+        } 
     }
 }
