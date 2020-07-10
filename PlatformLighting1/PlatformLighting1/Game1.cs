@@ -24,9 +24,8 @@ namespace PlatformLighting1
 
         VertexPositionColorTexture[] LightVertices;
         VertexPositionColorTexture[] EmissiveVertices;
-
-        static Random Random = new Random();
-
+        VertexPositionColorTexture[] CrepVertices;
+        
         World World;
         DrawablePhysicsObject Floor;
         List<DrawablePhysicsObject> CrateList;
@@ -47,7 +46,7 @@ namespace PlatformLighting1
 
         List<Light> LightList = new List<Light>();
 
-        Color AmbientLight = new Color(0.25f, 0.35f, 0.35f, 1f);
+        Color AmbientLight = new Color(0.1f, 0.1f, 0.1f, 1f);
     
         List<Sprite> SpriteList = new List<Sprite>();
         List<Solid> SolidList = new List<Solid>();
@@ -59,6 +58,11 @@ namespace PlatformLighting1
         KeyboardState PreviousKeyboardState, CurrentKeyboardState;
 
         Vector2 SpritePos;
+
+        List<Emitter> EmitterList = new List<Emitter>();
+        Texture2D HitEffectParticle, Glowball;
+
+        float ShotTime, CurShotTime;
 
         public static BlendState BlendBlack = new BlendState()
         {
@@ -72,6 +76,7 @@ namespace PlatformLighting1
         };
 
         Matrix Projection = Matrix.CreateOrthographicOffCenter(0, 1280, 720, 0, -10, 10);
+        static Random Random = new Random();
 
         public Game1()
         {
@@ -85,11 +90,16 @@ namespace PlatformLighting1
         protected override void Initialize()
         {
             SpritePos = new Vector2(100, 100);
+            ShotTime = 150;
+            CurShotTime = 0;
             base.Initialize();
         }
         
         protected override void LoadContent()
         {
+            HitEffectParticle = Content.Load<Texture2D>("HitEffectParticle");
+            Glowball = Content.Load<Texture2D>("Glowball");
+
             EmissiveMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             BlurMap = new RenderTarget2D(GraphicsDevice, 1280, 720); 
             ColorMap = new RenderTarget2D(GraphicsDevice, 1280, 720); 
@@ -129,13 +139,15 @@ namespace PlatformLighting1
             //    SolidList.Add(new Solid(BoxTexture, new Vector2(Random.Next(0, 1280), Random.Next(0, 720)), new Vector2(Random.Next(16, 128), Random.Next(16, 128))));
             //}
 
+            
+
             for (int i = 0; i < 40; i++)
             {
                 SolidList.Add(new Solid(BoxTexture, new Vector2(150 + (24 * i), 250), new Vector2(4, 32)));
             }
 
             SpriteList.Add(new Sprite(HealDrone, new Vector2(1280 / 2 - 32, 720 / 2 - 32), HealDroneNormal, HealDroneEmissive));
-
+            
             BlurEffect = Content.Load<Effect>("Blur");
             LightCombined = Content.Load<Effect>("LightCombined");
             LightEffect = Content.Load<Effect>("LightEffect");
@@ -174,45 +186,45 @@ namespace PlatformLighting1
                 Size = 800
             });
 
-            //LightList.Add(new Light()
-            //{
-            //    Color = new Color(141, 38, 10, 42),
-            //    //Color = Color.White,
-            //    Active = true,
-            //    Power = 1.8f,
-            //    Position = new Vector3(200, 100, 100),
-            //    Size = 800
-            //});
+            LightList.Add(new Light()
+            {
+                Color = new Color(141, 38, 10, 42),
+                //Color = Color.White,
+                Active = true,
+                Power = 1.8f,
+                Position = new Vector3(200, 100, 100),
+                Size = 800
+            });
 
-            //LightList.Add(new Light()
-            //{
-            //    //Color = new Color(141, 38, 10, 42),
-            //    Color = Color.White,
-            //    Active = true,
-            //    Power = 1.8f,
-            //    Position = new Vector3(500, 600, 100),
-            //    Size = 600
-            //});
+            LightList.Add(new Light()
+            {
+                //Color = new Color(141, 38, 10, 42),
+                Color = Color.White,
+                Active = true,
+                Power = 1.8f,
+                Position = new Vector3(500, 600, 100),
+                Size = 600
+            });
 
-            //LightList.Add(new Light()
-            //{
-            //    //Color = new Color(141, 38, 10, 42),
-            //    Color = Color.LimeGreen,
-            //    Active = true,
-            //    Power = 1.8f,
-            //    Position = new Vector3(1000, 350, 100),
-            //    Size = 400
-            //});
+            LightList.Add(new Light()
+            {
+                //Color = new Color(141, 38, 10, 42),
+                Color = Color.LimeGreen,
+                Active = true,
+                Power = 1.8f,
+                Position = new Vector3(1000, 80, 100),
+                Size = 400
+            });
 
-            //LightList.Add(new Light()
-            //{
-            //    //Color = new Color(141, 38, 10, 42),
-            //    Color = Color.Purple,
-            //    Active = true,
-            //    Power = 0.2f,
-            //    Position = new Vector3(1280 / 2, 50, 250),
-            //    Size = 600
-            //});
+            LightList.Add(new Light()
+            {
+                //Color = new Color(141, 38, 10, 42),
+                Color = Color.Purple,
+                Active = true,
+                Power = 0.2f,
+                Position = new Vector3(1280 / 2, 50, 250),
+                Size = 600
+            });
 
             LightList.Add(new Light()
             {
@@ -241,7 +253,7 @@ namespace PlatformLighting1
         protected override void Update(GameTime gameTime)
         {
             CurrentKeyboardState = Keyboard.GetState();
-
+                        
             if (Mouse.GetState().LeftButton == ButtonState.Pressed)
             {
                 Vector2 thing = new Vector2(232, 462) - new Vector2(Mouse.GetState().X, Mouse.GetState().Y);
@@ -250,6 +262,64 @@ namespace PlatformLighting1
                 LightningList.Clear();
                 ToonLightning newLightning = new ToonLightning(numSeg, 15, new Vector2(232, 462), new Vector2(Mouse.GetState().X, Mouse.GetState().Y), new Vector2(80, 100));
                 LightningList.Add(newLightning);
+            }
+
+            CurShotTime += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+
+            if (CurrentKeyboardState.IsKeyDown(Keys.G))
+            {
+                if (CurShotTime > ShotTime)
+                {
+                    Vector2 pos;
+                    pos = new Vector2(Mouse.GetState().X, Mouse.GetState().Y);
+
+                    Vector2 Direction;
+                    Direction = LightningList[0].Direction;
+
+                    Emitter FlashEmitter = new Emitter(HitEffectParticle, pos,
+                                                            new Vector2(
+                                                            MathHelper.ToDegrees(-(float)Math.Atan2(Direction.Y, Direction.X)) - 30,
+                                                            MathHelper.ToDegrees(-(float)Math.Atan2(Direction.Y, Direction.X)) + 30),
+                                                            new Vector2(8, 12), new Vector2(100, 200), 1f, false,
+                                                            new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.25f, 0.25f),
+                                                            Color.Yellow, Color.Orange, 0f, 0.05f, 100, 7, false, new Vector2(0, 1080), true,
+                                                            1.0f, null, null, null, null, null, true, new Vector2(0.25f, 0.25f), false, false,
+                                                            null, false, false, false);
+
+                    EmitterList.Add(FlashEmitter);
+
+                    Emitter FlashEmitter2 = new Emitter(HitEffectParticle, pos,
+                                                    new Vector2(
+                                                    MathHelper.ToDegrees(-(float)Math.Atan2(Direction.Y, Direction.X)) - 5,
+                                                    MathHelper.ToDegrees(-(float)Math.Atan2(Direction.Y, Direction.X)) + 5),
+                                                    new Vector2(12, 15), new Vector2(80, 150), 1f, false,
+                                                    new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.35f, 0.35f),
+                                                    Color.LightYellow, Color.Yellow, 0f, 0.05f, 100, 7, false, new Vector2(0, 1080), true,
+                                                    1.0f, null, null, null, null, null, true, new Vector2(0.18f, 0.18f), false, false,
+                                                    null, false, false, false);
+
+                    EmitterList.Add(FlashEmitter2);
+
+
+                    LightList.Add(new Light()
+                    {
+                        //Color = new Color(0, 180, 255, 42),
+                        Color = Color.Goldenrod,
+                        Active = true,
+                        Power = 0.35f,
+                        Position = new Vector3(pos.X, pos.Y, 0),
+                        Size = 400,
+                        MaxTime = 80,
+                        CurTime = 0
+                    });
+
+                    CurShotTime = 0;
+                }                        
+            }
+
+            foreach (Emitter emitter in EmitterList)
+            {
+                emitter.Update(gameTime);
             }
 
             foreach (ToonLightning bolt in LightningList)
@@ -265,6 +335,11 @@ namespace PlatformLighting1
             foreach (Solid solid in SolidList)
             {
                 solid.Update(gameTime);
+            }
+
+            foreach (Light light in LightList)
+            {
+                light.Update(gameTime);
             }
 
             //if (CurrentKeyboardState.IsKeyDown(Keys.Space))
@@ -297,7 +372,12 @@ namespace PlatformLighting1
             }
 
             spriteBatch.Draw(Laser, new Vector2(0, 80), new Color(255, 180, 0, 2));
-           
+
+            foreach (Emitter emitter in EmitterList)
+            {
+                emitter.Draw(spriteBatch);
+            }
+
             foreach (EffectPass pass in BasicEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
@@ -307,6 +387,8 @@ namespace PlatformLighting1
                     lightning.Draw(GraphicsDevice);
                 }
             }
+
+           
 
             spriteBatch.End();
             #endregion
@@ -375,25 +457,28 @@ namespace PlatformLighting1
 
             foreach (Light light in LightList)
             {
-                MyShadow(light);
+                if (light.Active == true)
+                {
+                    MyShadow(light);
 
-                GraphicsDevice.SetRenderTarget(LightMap);
+                    GraphicsDevice.SetRenderTarget(LightMap);
 
-                LightEffect.Parameters["ShadowMap"].SetValue(ShadowMap);
+                    LightEffect.Parameters["ShadowMap"].SetValue(ShadowMap);
 
-                LightEffect.Parameters["LightPosition"].SetValue(light.Position);
-                LightEffect.Parameters["LightColor"].SetValue(ColorToVector(light.Color));
-                LightEffect.Parameters["LightPower"].SetValue(light.Power);
-                LightEffect.Parameters["LightSize"].SetValue(light.Size);
-                LightEffect.Parameters["NormalMap"].SetValue(NormalMap);
-                LightEffect.Parameters["ColorMap"].SetValue(ColorMap);
+                    LightEffect.Parameters["LightPosition"].SetValue(light.Position);
+                    LightEffect.Parameters["LightColor"].SetValue(ColorToVector(light.Color));
+                    LightEffect.Parameters["LightPower"].SetValue(light.Power);
+                    LightEffect.Parameters["LightSize"].SetValue(light.Size);
+                    LightEffect.Parameters["NormalMap"].SetValue(NormalMap);
+                    LightEffect.Parameters["ColorMap"].SetValue(ColorMap);
 
-                LightEffect.CurrentTechnique = LightEffect.Techniques["DeferredPointLight"];
-                LightEffect.CurrentTechnique.Passes[0].Apply();
+                    LightEffect.CurrentTechnique = LightEffect.Techniques["DeferredPointLight"];
+                    LightEffect.CurrentTechnique.Passes[0].Apply();
 
-                GraphicsDevice.BlendState = BlendBlack;
-                GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, LightVertices, 0, 2);
-                
+                    GraphicsDevice.BlendState = BlendBlack;
+                    GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, LightVertices, 0, 2);
+
+                }
             }
 
             //TODO: This is here to have the emissive sprites also "cast" light on the LightMap. 
@@ -701,6 +786,11 @@ namespace PlatformLighting1
             {
                 return num + 1;
             }
+        }
+
+        public static double RandomDouble(double a, double b)
+        {
+            return a + Random.NextDouble() * (b - a);
         }
     }
 }

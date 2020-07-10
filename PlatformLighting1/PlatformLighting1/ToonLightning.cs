@@ -14,6 +14,7 @@ namespace PlatformLighting1
         static Random Random = new Random();
 
         Vector2 EndPosition, StartPosition;
+        public Vector2 Direction;
 
         public class Node
         {
@@ -197,6 +198,9 @@ namespace PlatformLighting1
             {
                 vertices2[i].Color = Color.Lerp(vertices2[i].Color, Color.Transparent, 0.05f);
             }
+
+            Direction = StartPosition - EndPosition;
+            Direction.Normalize();
 
             //if (curInd < vertices2.Length-8)
             //{

@@ -75,8 +75,11 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Drawable.cs" />
+    <Compile Include="Emitter.cs" />
     <Compile Include="Light.cs" />
     <Compile Include="Occluder.cs" />
+    <Compile Include="Particle.cs" />
     <Compile Include="PhysicsObjects\DrawablePhysicsObject.cs" />
     <Compile Include="PolygonShadow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
