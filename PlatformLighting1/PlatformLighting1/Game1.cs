@@ -19,7 +19,7 @@ namespace PlatformLighting1
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, FinalMap2, SpecMap, DepthMap, ShadowMap;
+        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, SpecMap, DepthMap, ShadowMap;
         RenderTarget2D CrepLightMap, CrepColorMap;
 
         VertexPositionColorTexture[] LightVertices;
@@ -119,7 +119,6 @@ namespace PlatformLighting1
             LightMap = new RenderTarget2D(GraphicsDevice, 1280, 720, false, SurfaceFormat.Rgba64, DepthFormat.None, 8, RenderTargetUsage.PreserveContents);
 
             FinalMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
-            FinalMap2 = new RenderTarget2D(GraphicsDevice, 1280, 720);
             SpecMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             CrepLightMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             CrepColorMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
@@ -174,6 +173,12 @@ namespace PlatformLighting1
             LightVertices[1] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, new Vector2(1, 0));
             LightVertices[2] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, new Vector2(0, 1));
             LightVertices[3] = new VertexPositionColorTexture(new Vector3(1, -1, 0), Color.White, new Vector2(1, 1));
+
+            CrepVertices = new VertexPositionColorTexture[4];
+            CrepVertices[0] = new VertexPositionColorTexture(new Vector3(-1, 1, 0), Color.White, new Vector2(0, 0));
+            CrepVertices[1] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, new Vector2(1, 0));
+            CrepVertices[2] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, new Vector2(0, 1));
+            CrepVertices[3] = new VertexPositionColorTexture(new Vector3(1, -1, 0), Color.White, new Vector2(1, 1));
 
             EmissiveVertices = new VertexPositionColorTexture[6];
             EmissiveVertices[0] = new VertexPositionColorTexture(new Vector3(0, 0, 0), Color.White, new Vector2(0, 0));
@@ -543,7 +548,6 @@ namespace PlatformLighting1
             GraphicsDevice.Clear(Color.DeepSkyBlue);
 
             spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, null, null, null, LightCombined);
-
             #region Draw the lightmap and color map combined
             LightCombined.CurrentTechnique = LightCombined.Techniques["DeferredCombined2"];
             LightCombined.Parameters["ambient"].SetValue(1f);
@@ -557,10 +561,13 @@ namespace PlatformLighting1
             LightCombined.CurrentTechnique.Passes[0].Apply();
 
             spriteBatch.Draw(ColorMap, Vector2.Zero, Color.White);
-            #endregion
+            #endregion                       
+            spriteBatch.End();
 
-            
-            spriteBatch.End(); 
+            spriteBatch.Begin();
+            spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
+            spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
+            spriteBatch.End();
             #endregion
 
             #region Crepuscular LightMap
@@ -586,30 +593,13 @@ namespace PlatformLighting1
             }            
             spriteBatch.End();
             #endregion
-
-            GraphicsDevice.SetRenderTarget(FinalMap2);
-            GraphicsDevice.Clear(Color.Black);
-            //This used to be drawn with Additive Blending. Now just using lower alpha values when drawing sprites instead.
-            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-
-            spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
-
-            //DRAW SOLIDS HERE INSTEAD OF IN THE CrepColorMap IF THE EMISSIVE SHOULD BE DRAWN OVER THE SOLIDS
-            //foreach (Solid solid in SolidList)
-            //{
-            //    solid.Draw(spriteBatch, Color.Black);
-            //}
-
-            spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
-            spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
-            spriteBatch.End();
-
+            
             #region Crepuscular ColorMap
             GraphicsDevice.SetRenderTarget(CrepColorMap);
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
-            spriteBatch.Draw(FinalMap2, FinalMap2.Bounds, Color.White);
-            
+            spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
+
             foreach (Solid solid in SolidList)
             {
                 solid.Draw(spriteBatch, Color.Black);
@@ -636,7 +626,7 @@ namespace PlatformLighting1
 
                 spriteBatch.Draw(CrepColorMap, new Rectangle(640, 0, 320, 180), Color.White);
                 spriteBatch.Draw(ColorMap, new Rectangle(640, 180, 320, 180), Color.White);
-                spriteBatch.Draw(FinalMap2, new Rectangle(640, 360, 320, 180), Color.White);
+                spriteBatch.Draw(FinalMap, new Rectangle(640, 360, 320, 180), Color.White);
                 spriteBatch.Draw(ShadowMap, new Rectangle(640, 540, 320, 180), Color.White);
 
                 spriteBatch.End();
@@ -647,6 +637,7 @@ namespace PlatformLighting1
                 spriteBatch.Draw(CrepLightMap, new Rectangle(960, 0, 320, 180), Color.White);
                 spriteBatch.End();
             }
+            #endregion
             else
             {
                 foreach (CrepuscularLight light in CrepLightList)
@@ -655,16 +646,18 @@ namespace PlatformLighting1
                     RaysEffect.Parameters["decay"].SetValue(light.Decay);
                     RaysEffect.Parameters["exposure"].SetValue(light.Exposure);
                     RaysEffect.Parameters["density"].SetValue(light.Density);
-                    RaysEffect.Parameters["weight"].SetValue(light.Weight);                    
-
+                    RaysEffect.Parameters["weight"].SetValue(light.Weight);
                     RaysEffect.Parameters["ColorMap"].SetValue(CrepColorMap);
+
                     spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+
                     RaysEffect.CurrentTechnique.Passes[0].Apply();
                     spriteBatch.Draw(CrepLightMap, FinalMap.Bounds, Color.White);
+
                     spriteBatch.End();
                 }
             }
-            #endregion
+            
             #endregion
             
             base.Draw(gameTime);
