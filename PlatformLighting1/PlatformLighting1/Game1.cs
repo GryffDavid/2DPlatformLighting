@@ -16,7 +16,7 @@ namespace PlatformLighting1
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, FinalMap2, SpecMap;
+        RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, FinalMap2, SpecMap, DepthMap;
         RenderTarget2D CrepLightMap, CrepColorMap;
 
         VertexPositionColorTexture[] LightVertices;
@@ -81,6 +81,8 @@ namespace PlatformLighting1
             SpecMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             CrepLightMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             CrepColorMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
+            DepthMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
+
 
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
@@ -126,9 +128,9 @@ namespace PlatformLighting1
             {
                 Color = Color.White,
                 Active = true,
-                LightDecay = 8,
-                Power = 0.001f,
-                Position = new Vector3(100, 100, 150)
+                LightDecay = 999999999,
+                Power = 0.0000001f,
+                Position = new Vector3(100, 100, 250)
             });
         }
         
@@ -141,7 +143,7 @@ namespace PlatformLighting1
         {
             Vector3 LightPos;
 
-            LightPos = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 5);
+            LightPos = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 25);
             LightList[0].Position = LightPos;
 
             foreach (Sprite sprite in SpriteList)
@@ -217,6 +219,14 @@ namespace PlatformLighting1
             spriteBatch.End();
             #endregion
 
+            #region Draw to DepthMap
+            GraphicsDevice.SetRenderTarget(DepthMap);
+            GraphicsDevice.Clear(Color.Black);
+            spriteBatch.Begin();
+
+            spriteBatch.End();
+            #endregion
+
             #region Draw to LightMap
             GraphicsDevice.SetRenderTarget(LightMap);
             GraphicsDevice.Clear(Color.Transparent);
@@ -246,6 +256,23 @@ namespace PlatformLighting1
 
                 GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, LightVertices, 0, 2);
             }
+
+            //spriteBatch.Begin();
+            //foreach (Light light in LightList)
+            //{
+            //    foreach (Sprite sprite in SpriteList)
+            //    {
+            //        Vector2 position;
+            //        float dist = Vector2.Distance(sprite.Position + new Vector2(HealDrone.Width / 2, HealDrone.Height / 2), new Vector2(light.Position.X, light.Position.Y));
+            //        Vector2 direction = sprite.Position - new Vector2(light.Position.X, light.Position.Y);
+            //        direction.Normalize();
+
+            //        position = sprite.Position + (direction * dist);
+
+            //        spriteBatch.Draw(HealDrone, position, null, Color.Black * 0.5f, 0, Vector2.Zero, MathHelper.Clamp(dist * 0.01f, 1.0f, float.PositiveInfinity), SpriteEffects.None, 0);
+            //    }
+            //}
+            //spriteBatch.End();
 
             #endregion
             

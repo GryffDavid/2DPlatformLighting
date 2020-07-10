@@ -3,9 +3,10 @@ Content\NormalTexture.xnb
 Content\Texture.xnb
 Content\Flare1.xnb
 Content\HealDrone.xnb
+Content\HealDroneNormal.xnb
+Content\HealDroneEmissive.xnb
 Content\Blur.xnb
 Content\LightCombined.xnb
 Content\LightEffect.xnb
 Content\Crepuscular.xnb
-Content\HealDroneNormal.xnb
-Content\HealDroneEmissive.xnb
+Content\Box.xnb

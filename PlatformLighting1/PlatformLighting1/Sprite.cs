@@ -10,7 +10,7 @@ namespace PlatformLighting1
 {
     class Sprite
     {
-        Vector2 Position;
+        public Vector2 Position;
         Texture2D Texture, Normal, Emissive;
         
         public Sprite(Texture2D texture, Vector2 position, Texture2D normal, Texture2D emissive)
