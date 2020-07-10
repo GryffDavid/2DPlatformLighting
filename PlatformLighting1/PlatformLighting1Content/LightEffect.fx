@@ -79,7 +79,7 @@ float boxDist(float2 p, float2 size)
 
 float sceneDist(float2 p)
 {
-	float b1 =  boxDist(p - float2(200, 250), float2(40, 40));	
+	float b1 =  boxDist(p - float2(200, 200), float2(100, 25));	
 	float m =  b1;
     
 	return m;
@@ -164,6 +164,8 @@ void setLuminance(inout float4 col, float lum)
 
 //MAIN SCENE
 
+float4 ambientLight = float4(0.005, 0.005, 0.005, 1);
+float3 halfVec = float3(0, 0, 1);
 
 PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 {	
@@ -179,26 +181,39 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	normal *= float3(1, -1, 1);
 
 
-	//Get the direction of the current pixel from the center of the light
-	float3 lightDirection = lightPosition - float3(p.x, p.y, -25);
-	float3 lightDirNorm = normalize(lightDirection);
-	float3 halfVec = float3(0, 0, 1);
-	float amount = max(dot(normal, lightDirNorm), 0);
-
-	//Pretty sure this handles specular reflections			
-	float3 reflect = normalize(2.0 * amount * normal - lightDirNorm);
-	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.005 * 255), amount); 
+	
 	
 	float dist = sceneDist(p);
-	float4 col = float4(0.12,0.1,0.1,1);
+	float4 col = ambientLight;
 
 
 	float2 light1Pos = float2(lightPosition.x, lightPosition.y);
-	float4 light1Col = float4(255.0/255.0, 229.0/255.0, 0, 1);
+	float4 light1Col = float4(1.0, 0.9, 0.5, 1);
 
-	setLuminance(light1Col, 0.7);
+	float2 light2Pos = float2(250, 250);
+	float4 light2Col = float4(0.1, 1, 0.9, 1);
+
 	
-	col += drawLight(p, light1Pos, light1Col, dist, 400.0, 1.0)  * specular;    
+	
+	//Get the direction of the current pixel from the center of the light
+	float3 lightDirNorm = normalize(float3(light1Pos, 0) - float3(p.x, p.y, -25));	
+	float amount = max(dot(normal, lightDirNorm), 0);		
+	float3 reflect = normalize(2.0 * amount * normal - lightDirNorm);
+	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.01 * 255), amount); 
+	setLuminance(light1Col, 1.7);
+
+	col += drawLight(p, light1Pos, light1Col, dist, 800.0, 1.0) * specular;
+
+
+	//Get the direction of the current pixel from the center of the light
+	lightDirNorm = normalize(float3(light2Pos, 0) - float3(p.x, p.y, -25));	
+	amount = max(dot(normal, lightDirNorm), 0);		
+	reflect = normalize(2.0 * amount * normal - lightDirNorm);
+	specular = min(pow(saturate(dot(reflect, halfVec)), 0.005 * 255), amount);
+	setLuminance(light1Col, 0.7);
+
+	col += drawLight(p, light2Pos, light2Col, dist, 400.0, 1.0) * specular;
+
 	col = lerp(col, col, clamp(-dist, 0.0, 1.0));
 	
     Output.Color = clamp(col, 0.0, 1.0);
