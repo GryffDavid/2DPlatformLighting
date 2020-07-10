@@ -26,7 +26,7 @@ namespace PlatformLighting1
         VertexBuffer EmissiveVertexBuffer;
 
         #region Sprites
-        Texture2D Sprite, HealDrone, Texture, NormalTexture;
+        Texture2D Sprite, HealDrone, HealDroneEmissive, HealDroneNormal, Texture, NormalTexture;
         Texture2D CrepuscularLightTexture;
         #endregion
 
@@ -87,8 +87,10 @@ namespace PlatformLighting1
             Sprite = Content.Load<Texture2D>("Sprite");
             CrepuscularLightTexture = Content.Load<Texture2D>("Flare1");
             HealDrone = Content.Load<Texture2D>("HealDrone");
+            HealDroneNormal = Content.Load<Texture2D>("HealDroneNormal");
+            HealDroneEmissive = Content.Load<Texture2D>("HealDroneEmissive");
 
-            SpriteList.Add(new Sprite(HealDrone, new Vector2(1280 / 2 - 32, 720 / 2 - 32)));
+            SpriteList.Add(new Sprite(HealDrone, new Vector2(1280 / 2 - 32, 720 / 2 - 32), HealDroneNormal, HealDroneEmissive));
 
             BlurEffect = Content.Load<Effect>("Blur");
             LightCombined = Content.Load<Effect>("LightCombined");
@@ -158,6 +160,10 @@ namespace PlatformLighting1
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
             spriteBatch.Draw(Sprite, new Vector2(100, 100), Color.White);
+            foreach (Sprite sprite in SpriteList)
+            {
+                sprite.DrawEmissive(spriteBatch);
+            }
             spriteBatch.End();
             #endregion
             
@@ -182,6 +188,10 @@ namespace PlatformLighting1
             GraphicsDevice.Clear(Color.Transparent);
             spriteBatch.Begin();
             spriteBatch.Draw(Texture, Texture.Bounds, Color.White);
+            foreach (Sprite sprite in SpriteList)
+            {
+                sprite.Draw(spriteBatch, Color.White);
+            }
             spriteBatch.End();
             #endregion
 
@@ -189,7 +199,13 @@ namespace PlatformLighting1
             GraphicsDevice.SetRenderTarget(NormalMap);
             GraphicsDevice.Clear(Color.Transparent);
             spriteBatch.Begin();
+
             spriteBatch.Draw(NormalTexture, NormalTexture.Bounds, Color.White);
+            spriteBatch.Draw(Sprite, new Vector2(100, 100), Color.Black);
+            foreach (Sprite sprite in SpriteList)
+            {
+                sprite.DrawNormal(spriteBatch);
+            }
             spriteBatch.End();
             #endregion
 
@@ -252,10 +268,9 @@ namespace PlatformLighting1
             LightCombined.CurrentTechnique.Passes[0].Apply();
 
             spriteBatch.Draw(ColorMap, Vector2.Zero, Color.White);
-
-
             #endregion
 
+            
             spriteBatch.End(); 
             #endregion
 
@@ -279,7 +294,8 @@ namespace PlatformLighting1
             spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
             spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
             spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
-
+            spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
+            
             spriteBatch.End();
 
             #region Crepuscular ColorMap
@@ -287,10 +303,11 @@ namespace PlatformLighting1
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
             spriteBatch.Draw(FinalMap2, FinalMap2.Bounds, Color.White);
-            foreach (Sprite sprite in SpriteList)
-            {
-                sprite.Draw(spriteBatch, Color.White);
-            }
+
+            //foreach (Sprite sprite in SpriteList)
+            //{
+            //    sprite.Draw(spriteBatch, Color.White);
+            //}
             spriteBatch.End(); 
             #endregion
 
@@ -299,7 +316,8 @@ namespace PlatformLighting1
             GraphicsDevice.Clear(Color.Black);
             RaysEffect.Parameters["ColorMap"].SetValue(CrepColorMap);
             spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
-
+            //spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
+            //spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
             RaysEffect.CurrentTechnique.Passes[0].Apply();
             spriteBatch.Draw(CrepLightMap, FinalMap.Bounds, Color.White);
             

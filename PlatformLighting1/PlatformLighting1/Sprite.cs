@@ -11,12 +11,14 @@ namespace PlatformLighting1
     class Sprite
     {
         Vector2 Position;
-        Texture2D Texture;
-
-        public Sprite(Texture2D texture, Vector2 position)
+        Texture2D Texture, Normal, Emissive;
+        
+        public Sprite(Texture2D texture, Vector2 position, Texture2D normal, Texture2D emissive)
         {
             Position = position;
             Texture = texture;
+            Normal = normal;
+            Emissive = emissive;
         }
 
         public void LoadContent(ContentManager content)
@@ -26,12 +28,22 @@ namespace PlatformLighting1
 
         public void Update(GameTime gameTime)
         {
-            Position.X += (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds);
+            Position.X -= 2* (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds);
         }
 
         public void Draw(SpriteBatch spriteBatch, Color color)
         {
             spriteBatch.Draw(Texture, Position, color);
+        }
+
+        public void DrawNormal(SpriteBatch spriteBatch)
+        {
+            spriteBatch.Draw(Normal, Position, Color.White);
+        }
+
+        public void DrawEmissive(SpriteBatch spriteBatch)
+        {
+            spriteBatch.Draw(Emissive, Position, Color.White);
         }
     }
 }
