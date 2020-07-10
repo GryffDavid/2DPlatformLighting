@@ -18,9 +18,9 @@ sampler ColorMapSampler = sampler_state {
 	AddressV = mirror;
 };
 
-Texture SpecularMap;
-sampler SpecularMapSampler = sampler_state {
-	texture = <SpecularMap>;
+Texture ShadowMap;
+sampler ShadowMapSampler = sampler_state {
+	texture = <ShadowMap>;
 	magfilter = LINEAR;
 	minfilter = LINEAR;
 	mipfilter = LINEAR;
@@ -65,95 +65,20 @@ float3 LightPosition;
 float4 LightColor, AmbientColor;
 float LightPower, LightSize;
 
-float4 myBoxes[34];
-
 //////////////////
 //Dist functions//
 //////////////////
-
-float merge(float d1, float d2)
-{
-	return min(d1, d2);
-}
 
 float circleDist(float2 p, float radius)
 {
 	return length(p) - radius;
 }
 
-float boxDist(float2 p, float2 size)
-{
-	float2 d = abs(p) - size;  
-	return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
-}
 
-float sceneDist(float2 p)
-{
-	float b2 = 0;
-	float b1 =  boxDist(p - float2(myBoxes[0].x, myBoxes[0].y), float2(myBoxes[0].z, myBoxes[0].w));
-	float m = b1;
-
-	for (int i = 1; i < 4; i++)
-	{
-		b2 =  boxDist(p - float2(myBoxes[i].x, myBoxes[i].y), float2(myBoxes[i].z, myBoxes[i].w));
-		m = merge(m, b2);
-	}
-
-	//float b2 =  boxDist(p - float2(myBoxes[1].x, myBoxes[1].y), float2(myBoxes[1].z, myBoxes[1].w));
-	//float b3 =  boxDist(p - float2(myBoxes[2].x, myBoxes[2].y), float2(myBoxes[2].z, myBoxes[2].w));
-	//float b4 =  boxDist(p - float2(myBoxes[3].x, myBoxes[3].y), float2(myBoxes[3].z, myBoxes[3].w));
-
-	//float m = merge(b1, b2);
-	//m = merge(m, b3);
-	//m = merge(m, b4);
-
-	return m;
-}
 
 //////////////////////////////
 //Light and Shadow Functions//
 //////////////////////////////
-
-float shadow(float2 p, float2 pos, float radius)
-{
-	float2 dir = normalize(pos - p);
-	float dl = length(p - pos);
-	
-	// fraction of light visible, starts at one radius (second half added in the end);
-	float lf = radius * dl;
-	
-	// distance traveled
-	float dt = 0.01;
-
-	for (int i = 0; i < 32; ++i)
-	{				
-		// distance to scene at current position
-		float sd = sceneDist(p + dir * dt);
-
-        // early out when this ray is guaranteed to be full shadow
-        if (sd < -radius) 
-            return 0.0;
-        
-		// width of cone-overlap at light
-		// 0 in center, so 50% overlap: add one radius outside of loop to get total coverage
-		// should be '(sd / dt) * dl', but '*dl' outside of loop
-		lf = min(lf, sd / dt);
-		
-		// move ahead
-		dt += max(1.0, abs(sd));
-
-		if (dt > dl) 
-			break;
-	}
-
-	// multiply by dl to get the real projected overlap (moved out of loop)
-	// add one radius, before between -radius and + radius
-	// normalize to 1 ( / 2*radius)
-	lf = clamp((lf*dl + radius) / (2.0 * radius), 0.0, 1.0);
-	lf = smoothstep(0.0, 1.0, lf);
-	return lf;
-}
-
 
 float4 drawLight(float2 p, float2 pos, float4 color, float dist, float range, float radius)
 {
@@ -165,12 +90,11 @@ float4 drawLight(float2 p, float2 pos, float4 color, float dist, float range, fl
 		return float4(0, 0, 0, 0);
 	
 	// shadow and falloff
-	float shad = shadow(p, pos, radius);
 	float fall = (range - ld)/range;
 	fall *= fall;
     
 	float source = clamp(-circleDist(p - pos, radius), 0.0, 1.0);
-	return (shad * fall + source) * color;
+	return (fall + source) * color;
 }
 
 
@@ -196,8 +120,6 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	PixelToFrame Output = (PixelToFrame)0;
 	
 	float4 colorMap = tex2D(ColorMapSampler, PSIn.TexCoord);	
-	float4 specValue = tex2D(SpecularMapSampler, PSIn.TexCoord);
-	normalize(specValue);
 		
 	float2 p = PSIn.TexCoord.xy * iResolution.xy;
 
@@ -206,10 +128,8 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	float3 normal = (2.0f * (tex2D(NormalMapSampler, PSIn.TexCoord))) - 1.0f;
 	normal *= float3(1, -1, 1);
 
-
 	
-	
-	float dist = sceneDist(p);
+	float dist = 1.0;
 	float4 col = AmbientColor;
 
 
@@ -220,14 +140,14 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	float3 lightDirNorm = normalize(float3(light1Pos, 0) - float3(p.x, p.y, -25));	
 	float amount = max(dot(normal, lightDirNorm), 0);		
 	float3 reflect = normalize(2.0 * amount * normal - lightDirNorm);
-	float specular = min(pow(saturate(dot(reflect, halfVec)), 2.0), amount); 
+	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.01 * 255), amount); 
 	setLuminance(light1Col, LightPower);
 
 	col += drawLight(p, light1Pos, light1Col, dist, LightSize, 1.0) * specular;
 	
 	col = lerp(col, col, clamp(-dist, 0.0, 1.0));
 	
-    Output.Color = clamp(col, 0.0, 1.0);
+    Output.Color = clamp(col, 0.0, 1.0) * tex2D(ShadowMapSampler, PSIn.TexCoord);
 
 	return Output;
 }

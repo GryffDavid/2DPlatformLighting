@@ -43,19 +43,14 @@ float4 CombinedPixelShader(float4 color : COLOR0, float2 texCoords : TEXCOORD0) 
 		
 	if (normal > 0.0f)
 	{
-		float4 finalColor;
+		//float4 finalColor = color2 * ambientColor;
+		//finalColor += shading;
+		//return finalColor;
 
-		//DIFFERENT METHODS FOR BLENDING GETS SLIGHTLY DIFFERENT LOOKS
-
-		//finalColor = color2 * ambientColor;
-		//finalColor += shading * color2;
-
-		finalColor = color2 * ambientColor * ambient;
+		//Darker
+		float4 finalColor = color2 * ambientColor * ambient;
 		finalColor += (shading * color2) * lightAmbient;
 		
-		//finalColor = color2 + ambientColor;
-		//finalColor *= shading;
-
 		return finalColor;
 	}
 	else
