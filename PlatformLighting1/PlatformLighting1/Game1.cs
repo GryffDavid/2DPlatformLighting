@@ -51,6 +51,7 @@ namespace PlatformLighting1
     
         List<Sprite> SpriteList = new List<Sprite>();
         List<Solid> SolidList = new List<Solid>();
+        List<SolidCircle> CircleList = new List<SolidCircle>();
         List<PolygonShadow> ShadowList = new List<PolygonShadow>();
         List<myRay> RayList = new List<myRay>();
 
@@ -119,6 +120,8 @@ namespace PlatformLighting1
                 Weight = 0.358767f
             });
 
+            CircleList.Add(new SolidCircle());
+
             //for (int i = 0; i < 5; i++)
             //{
             //    CrepLightList.Add(new CrepuscularLight()
@@ -170,7 +173,7 @@ namespace PlatformLighting1
             BoxTexture = Content.Load<Texture2D>("Box");
             Laser = Content.Load<Texture2D>("Beam");
 
-            SolidList.Add(new Solid(BoxTexture, new Vector2(400, 300), new Vector2(80, 80)));
+            SolidList.Add(new Solid(BoxTexture, new Vector2(250, 250), new Vector2(80, 80)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(100, 250), new Vector2(50, 20)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(500, 400), new Vector2(120, 40)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(1000, 500), new Vector2(70, 80)));
@@ -484,6 +487,8 @@ namespace PlatformLighting1
                 }
             }
 
+           
+
             spriteBatch.End();
             #endregion
             
@@ -610,9 +615,9 @@ namespace PlatformLighting1
             spriteBatch.Begin();
             spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
             spriteBatch.End();
-
+            
             #endregion
-
+            
             #region Combine Normals, Lighting and Color
             GraphicsDevice.SetRenderTarget(FinalMap);
             GraphicsDevice.Clear(Color.DeepSkyBlue);
@@ -687,7 +692,7 @@ namespace PlatformLighting1
 
                 spriteBatch.Begin();
                 spriteBatch.Draw(CrepuscularLightTexture, new Rectangle((int)(light.Position.X), (int)(light.Position.Y), CrepuscularLightTexture.Width / 3, CrepuscularLightTexture.Height / 3), null,
-                                 LightList[CrepLightList.IndexOf(light)].Color, 0, new Vector2(CrepuscularLightTexture.Width / 2, CrepuscularLightTexture.Height / 2), SpriteEffects.None, 0);
+                                     LightList[CrepLightList.IndexOf(light)].Color, 0, new Vector2(CrepuscularLightTexture.Width / 2, CrepuscularLightTexture.Height / 2), SpriteEffects.None, 0);
                 spriteBatch.End();
 
                 #region Buffer1
@@ -699,7 +704,7 @@ namespace PlatformLighting1
                     RaysEffect.Parameters["exposure"].SetValue(light.Exposure);
                     RaysEffect.Parameters["density"].SetValue(light.Density);
                     RaysEffect.Parameters["weight"].SetValue(light.Weight);
-                    RaysEffect.Parameters["DepthMap"].SetValue(DepthMap);
+                    RaysEffect.Parameters["DepthMap"].SetValue(DepthMap);                    
 
                     spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
                     RaysEffect.CurrentTechnique.Passes[0].Apply();
@@ -753,7 +758,9 @@ namespace PlatformLighting1
                 spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
                 spriteBatch.Draw(Buffer2, FinalMap.Bounds, Color.White);
 
-                spriteBatch.End();                
+                CircleList[0].Draw(spriteBatch, GraphicsDevice, BasicEffect);
+
+                spriteBatch.End();
             }
             
             #endregion
@@ -793,7 +800,7 @@ namespace PlatformLighting1
             RayList.Clear();
             ShadowList.Clear();
 
-            foreach (Solid solid in SolidList)
+            foreach (SolidCircle solid in CircleList)
             {
                 Vector3 lightVector, check1, check2, thing, thing2;
 

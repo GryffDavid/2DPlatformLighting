@@ -87,6 +87,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Solid.cs" />
+    <Compile Include="SolidCircle.cs" />
     <Compile Include="Sprite.cs" />
     <Compile Include="ToonLightning.cs" />
   </ItemGroup>
