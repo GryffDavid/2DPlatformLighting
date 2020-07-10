@@ -18,7 +18,6 @@ namespace PlatformLighting1
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-
         RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, SpecMap, DepthMap, ShadowMap;
         RenderTarget2D CrepLightMap, CrepColorMap, OcclusionMap;
         RenderTarget2D Buffer1, Buffer2;
