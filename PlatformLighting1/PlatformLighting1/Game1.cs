@@ -253,7 +253,7 @@ namespace PlatformLighting1
         protected override void Update(GameTime gameTime)
         {
             CurrentKeyboardState = Keyboard.GetState();
-                        
+
             if (Mouse.GetState().LeftButton == ButtonState.Pressed)
             {
                 Vector2 thing = new Vector2(232, 462) - new Vector2(Mouse.GetState().X, Mouse.GetState().Y);
@@ -314,8 +314,10 @@ namespace PlatformLighting1
                     });
 
                     CurShotTime = 0;
-                }                        
+                }
             }
+
+            //LightList[1].Position = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 0);
 
             foreach (Emitter emitter in EmitterList)
             {
@@ -566,7 +568,6 @@ namespace PlatformLighting1
             #region Draw to the BackBuffer
             GraphicsDevice.SetRenderTarget(null);
             GraphicsDevice.Clear(Color.Black);
-
             #region Draw Maps on the side
             if (Keyboard.GetState().IsKeyDown(Keys.S))
             {
@@ -585,7 +586,7 @@ namespace PlatformLighting1
                 spriteBatch.Draw(ColorMap, new Rectangle(640, 180, 320, 180), Color.White);
                 spriteBatch.Draw(FinalMap2, new Rectangle(640, 360, 320, 180), Color.White);
                 spriteBatch.Draw(ShadowMap, new Rectangle(640, 540, 320, 180), Color.White);
-                
+
                 spriteBatch.End();
 
                 RaysEffect.Parameters["ColorMap"].SetValue(DepthMap);
@@ -603,14 +604,6 @@ namespace PlatformLighting1
                 spriteBatch.End();
             }
             #endregion
-
-
-
-            //GraphicsDevice.SetRenderTarget(null);
-            //GraphicsDevice.Clear(Color.White);
-            //spriteBatch.Begin();
-            //spriteBatch.Draw(ShadowMap, ShadowMap.Bounds, Color.White);
-            //spriteBatch.End();
             #endregion
             
             base.Draw(gameTime);

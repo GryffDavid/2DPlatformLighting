@@ -35,6 +35,8 @@ sampler NormalMapSampler = sampler_state
 	AddressV = mirror;
 };
 
+float2 offset = float2(0.5/1280.0, 0.5/720.0);
+
 float4 CombinedPixelShader(float4 color : COLOR0, float2 texCoords : TEXCOORD0) : COLOR0
 {	
 	float4 color2 = tex2D(ColorMapSampler, texCoords);

@@ -113,17 +113,19 @@ void setLuminance(inout float4 col, float lum)
 //float4 ambientLight = float4(0.05, 0.05, 0.05, 1);
 float3 halfVec = float3(0, 0, 1);
 
+float2 offset = float2(0.5/1280.0, 0.5/720.0);
+
 PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 {	
 	PixelToFrame Output = (PixelToFrame)0;
 	
 	float4 colorMap = tex2D(ColorMapSampler, PSIn.TexCoord);	
 		
-	float2 p = PSIn.TexCoord.xy * iResolution.xy;
+	float2 p = (PSIn.TexCoord.xy) * iResolution.xy;
 
 
 	//The angle of the pixel based on the normal map interpretation
-	float3 normal = (2.0f * (tex2D(NormalMapSampler, PSIn.TexCoord))) - 1.0f;
+	float3 normal = (2.0f * (tex2D(NormalMapSampler, PSIn.TexCoord + offset))) - 1.0f;
 	normal *= float3(1, -1, 1);
 
 	
@@ -146,9 +148,9 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	col = lerp(col, col, clamp(-dist, 0.0, 1.0));
 	
 	
-	Output.Color = clamp(col, 0.0, 1.0) * tex2D(ShadowMapSampler, PSIn.TexCoord);
-
-
+	Output.Color = clamp(col, 0.0, 1.0) * tex2D(ShadowMapSampler, PSIn.TexCoord);	
+	//Output.Color = colorMap;
+	//Output.Color = col;
 	return Output;
 }
 

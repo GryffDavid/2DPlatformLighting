@@ -20,6 +20,8 @@ float density=0.826;
 float weight=0.358767;
 const int NUM_SAMPLES = 64;
 
+float2 offset = float2(0.5/1280.0, 0.5/720.0);
+
 float4 PixelShaderFunction(float2 texCoord : TEXCOORD0) : COLOR0
 {
 	float2 tc = texCoord.xy;
@@ -38,9 +40,11 @@ float4 PixelShaderFunction(float2 texCoord : TEXCOORD0) : COLOR0
 		illuminationDecay *= decay;
 	}
 
-	float4 realColor = tex2D(ColorSampler, texCoord.xy);
+	float4 realColor = tex2D(ColorSampler, texCoord.xy + offset);
 
+	//return realColor;
 	return ((float4((float3(color.r, color.g, color.b) * exposure), 1)) + (realColor * (1.1)));
+	
 }
 
 technique Technique1
