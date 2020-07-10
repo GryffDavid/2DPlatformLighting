@@ -174,14 +174,7 @@ namespace PlatformLighting1
             SolidList.Add(new Solid(BoxTexture, new Vector2(100, 250), new Vector2(50, 20)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(500, 400), new Vector2(120, 40)));
             SolidList.Add(new Solid(BoxTexture, new Vector2(1000, 500), new Vector2(70, 80)));
-
-            //for (int i = 0; i < 20; i++)
-            //{
-            //    SolidList.Add(new Solid(BoxTexture, new Vector2(Random.Next(0, 1280), Random.Next(0, 720)), new Vector2(Random.Next(16, 128), Random.Next(16, 128))));
-            //}
-
             
-
             for (int i = 0; i < 40; i++)
             {
                 SolidList.Add(new Solid(BoxTexture, new Vector2(150 + (24 * i), 250), new Vector2(4, 32)));
