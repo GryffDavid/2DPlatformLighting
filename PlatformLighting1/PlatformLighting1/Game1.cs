@@ -27,6 +27,8 @@ namespace PlatformLighting1
 
         static Random Random = new Random();
 
+        List<Vector4> Boxes = new List<Vector4>();
+
         #region Sprites
         Texture2D Sprite, HealDrone, HealDroneEmissive, HealDroneNormal, Texture, NormalTexture;
         Texture2D CrepuscularLightTexture;
@@ -67,6 +69,10 @@ namespace PlatformLighting1
         
         protected override void Initialize()
         {
+            Boxes.Add(new Vector4(200, 200, 100, 25));
+            Boxes.Add(new Vector4(200, 350, 100, 25));
+            Boxes.Add(new Vector4(800, 100, 100, 25));
+            Boxes.Add(new Vector4(100, 600, 100, 25));
 
             base.Initialize();
         }
@@ -100,7 +106,7 @@ namespace PlatformLighting1
             LightCombined = Content.Load<Effect>("LightCombined");
             LightEffect = Content.Load<Effect>("LightEffect");
             LightEffect.Parameters["AmbientColor"].SetValue(new Vector4(0.0015f, 0.0015f, 0.0015f, 1.0f));
-
+            LightEffect.Parameters["myBoxes"].SetValue(Boxes.ToArray());
 
 
             RaysEffect = Content.Load<Effect>("Crepuscular");
@@ -131,7 +137,7 @@ namespace PlatformLighting1
 
             LightList.Add(new Light()
             {
-                Color = Color.HotPink,
+                Color = new Color(141, 38, 10, 42),
                 Active = true,
                 Power = 0.87f,
                 Position = new Vector3(100, 100, 250),
@@ -140,7 +146,7 @@ namespace PlatformLighting1
 
             LightList.Add(new Light()
             {
-                Color = Color.White,
+                Color = new Color(214, 130, 32, 15),
                 Active = true,
                 Power = 0.7f,
                 Position = new Vector3(100, 100, 250),
@@ -149,7 +155,7 @@ namespace PlatformLighting1
 
             LightList.Add(new Light()
             {
-                Color = Color.Green,
+                Color = new Color(173, 195, 139, 185),
                 Active = true,
                 Power = 1.2f,
                 Position = new Vector3(800, 350, 250),
@@ -158,25 +164,25 @@ namespace PlatformLighting1
 
             LightList.Add(new Light()
             {
-                Color = Color.DeepSkyBlue,
+                Color = new Color(122, 11, 20, 57),
                 Active = true,
                 Power = 0.2f,
-                Position = new Vector3(500, 650, 100),
+                Position = new Vector3(825, 350, 100),
                 Size = 1200
             });
 
 
-            for (int i = 0; i < 30; i++)
-            {
-                LightList.Add(new Light()
-                {
-                    Color = new Color(Random.Next(0, 255), Random.Next(0, 255), Random.Next(0, 255), Random.Next(0, 255)),
-                    Active = true,
-                    Power = (float)Random.NextDouble(),
-                    Position = new Vector3(Random.Next(0, 1280), Random.Next(0, 720), Random.Next(10, 400)),
-                    Size = Random.Next(50, 600)
-                });
-            }
+            //for (int i = 0; i < 30; i++)
+            //{
+            //    LightList.Add(new Light()
+            //    {
+            //        Color = new Color(Random.Next(0, 255), Random.Next(0, 255), Random.Next(0, 255), Random.Next(0, 255)),
+            //        Active = true,
+            //        Power = (float)Random.NextDouble(),
+            //        Position = new Vector3(Random.Next(0, 1280), Random.Next(0, 720), Random.Next(10, 400)),
+            //        Size = Random.Next(50, 600)
+            //    });
+            //}
         }
 
         protected override void UnloadContent()
@@ -396,7 +402,6 @@ namespace PlatformLighting1
             
             base.Draw(gameTime);
         }
-
 
         protected Vector4 ColorToVector(Color color)
         {

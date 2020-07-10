@@ -55,10 +55,16 @@ float3 LightPosition;
 float4 LightColor, AmbientColor;
 float LightPower, LightSize;
 
+float4 myBoxes[4];
 
 //////////////////
 //Dist functions//
 //////////////////
+
+float merge(float d1, float d2)
+{
+	return min(d1, d2);
+}
 
 float circleDist(float2 p, float radius)
 {
@@ -73,12 +79,17 @@ float boxDist(float2 p, float2 size)
 
 float sceneDist(float2 p)
 {
-	float b1 =  boxDist(p - float2(200, 200), float2(100, 25));	
-	float m =  b1;
-    
+	float b1 =  boxDist(p - float2(200, 200), float2(100, 25));
+	float b2 =  boxDist(p - float2(500, 200), float2(100, 25));
+	float b3 =  boxDist(p - float2(400, 350), float2(100, 25));
+	float b4 =  boxDist(p - float2(100, 600), float2(100, 25));
+
+	float m = merge(b1, b2);
+	m = merge(m, b3);
+	m = merge(m, b4);
+
 	return m;
 }
-
 
 //////////////////////////////
 //Light and Shadow Functions//
