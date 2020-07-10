@@ -75,6 +75,7 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CrepuscularLight.cs" />
     <Compile Include="Drawable.cs" />
     <Compile Include="Emitter.cs" />
     <Compile Include="Light.cs" />

@@ -114,6 +114,7 @@ void setLuminance(inout float4 col, float lum)
 float3 halfVec = float3(0, 0, 1);
 
 float2 offset = float2(0.5/1280.0, 0.5/720.0);
+float specVal = 0.005;
 
 PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 {	
@@ -140,7 +141,7 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	float3 lightDirNorm = normalize(float3(light1Pos, 0) - float3(p.x, p.y, -25));	
 	float amount = max(dot(normal, lightDirNorm), 0);		
 	float3 reflect = normalize(2.0 * amount * normal - lightDirNorm);
-	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.005 * 255), amount); 
+	float specular = min(pow(saturate(dot(reflect, halfVec)), specVal * 255), amount); 
 	setLuminance(light1Col, LightPower);
 
 	col += drawLight(p, light1Pos, light1Col, dist, LightSize, 1.0) * specular;

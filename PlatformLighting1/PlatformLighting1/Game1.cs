@@ -63,6 +63,7 @@ namespace PlatformLighting1
         Texture2D HitEffectParticle, Glowball;
 
         float ShotTime, CurShotTime;
+        float SpecVal = 0.005f;
 
         public static BlendState BlendBlack = new BlendState()
         {
@@ -77,6 +78,8 @@ namespace PlatformLighting1
 
         Matrix Projection = Matrix.CreateOrthographicOffCenter(0, 1280, 720, 0, -10, 10);
         static Random Random = new Random();
+
+        List<CrepuscularLight> CrepLightList = new List<CrepuscularLight>();
 
         public Game1()
         {
@@ -97,6 +100,15 @@ namespace PlatformLighting1
         
         protected override void LoadContent()
         {
+            CrepLightList.Add(new CrepuscularLight() 
+            { 
+                Position = new Vector2(1280/2, 720/2), 
+                Decay = 0.9999f, 
+                Exposure = 0.23f, 
+                Density = 0.826f, 
+                Weight = 0.358767f 
+            });
+
             HitEffectParticle = Content.Load<Texture2D>("HitEffectParticle");
             Glowball = Content.Load<Texture2D>("Glowball");
 
@@ -188,53 +200,54 @@ namespace PlatformLighting1
 
             LightList.Add(new Light()
             {
-                Color = new Color(141, 38, 10, 42),
+                Color = Color.Goldenrod,
+                //Color = new Color(141, 38, 10, 42),
                 //Color = Color.White,
                 Active = true,
                 Power = 1.8f,
                 Position = new Vector3(200, 100, 100),
-                Size = 800
-            });
-
-            LightList.Add(new Light()
-            {
-                //Color = new Color(141, 38, 10, 42),
-                Color = Color.White,
-                Active = true,
-                Power = 1.8f,
-                Position = new Vector3(500, 600, 100),
-                Size = 600
-            });
-
-            LightList.Add(new Light()
-            {
-                //Color = new Color(141, 38, 10, 42),
-                Color = Color.LimeGreen,
-                Active = true,
-                Power = 1.8f,
-                Position = new Vector3(1000, 80, 100),
                 Size = 400
             });
 
-            LightList.Add(new Light()
-            {
-                //Color = new Color(141, 38, 10, 42),
-                Color = Color.Purple,
-                Active = true,
-                Power = 0.2f,
-                Position = new Vector3(1280 / 2, 50, 250),
-                Size = 600
-            });
+            //LightList.Add(new Light()
+            //{
+            //    //Color = new Color(141, 38, 10, 42),
+            //    Color = Color.White,
+            //    Active = true,
+            //    Power = 1.8f,
+            //    Position = new Vector3(500, 600, 100),
+            //    Size = 600
+            //});
 
-            LightList.Add(new Light()
-            {
-                //Color = new Color(0, 180, 255, 42),
-                Color = Color.Goldenrod,
-                Active = true,
-                Power = 0.8f,
-                Position = new Vector3(1280 - 700, 720 - 180, 250),
-                Size = 1200
-            });
+            //LightList.Add(new Light()
+            //{
+            //    //Color = new Color(141, 38, 10, 42),
+            //    Color = Color.LimeGreen,
+            //    Active = true,
+            //    Power = 1.8f,
+            //    Position = new Vector3(1000, 80, 100),
+            //    Size = 400
+            //});
+
+            //LightList.Add(new Light()
+            //{
+            //    //Color = new Color(141, 38, 10, 42),
+            //    Color = Color.Purple,
+            //    Active = true,
+            //    Power = 0.2f,
+            //    Position = new Vector3(1280 / 2, 50, 250),
+            //    Size = 600
+            //});
+
+            //LightList.Add(new Light()
+            //{
+            //    //Color = new Color(0, 180, 255, 42),
+            //    Color = Color.Goldenrod,
+            //    Active = true,
+            //    Power = 0.8f,
+            //    Position = new Vector3(1280 - 700, 720 - 180, 250),
+            //    Size = 1200
+            //});
 
 
             World = new World(new Vector2(0, 9.8f));
@@ -265,6 +278,29 @@ namespace PlatformLighting1
             }
 
             CurShotTime += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+
+            if (CurrentKeyboardState.IsKeyDown(Keys.Q))
+            {
+                CrepLightList[0].Exposure += 0.01f;
+            }
+
+
+            if (CurrentKeyboardState.IsKeyDown(Keys.Y))
+            {
+                SpecVal += 0.001f;
+                LightEffect.Parameters["specVal"].SetValue(SpecVal);
+            }
+
+            if (CurrentKeyboardState.IsKeyDown(Keys.H))
+            {
+                SpecVal -= 0.001f;
+                LightEffect.Parameters["specVal"].SetValue(SpecVal);
+            }
+
+            if (CurrentKeyboardState.IsKeyDown(Keys.A))
+            {
+                CrepLightList[0].Exposure -= 0.01f;
+            }
 
             if (CurrentKeyboardState.IsKeyDown(Keys.G))
             {
@@ -317,7 +353,9 @@ namespace PlatformLighting1
                 }
             }
 
-            //LightList[1].Position = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 0);
+            LightList[1].Position = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 0);
+            CrepLightList[0].Position = new Vector2(Mouse.GetState().X, Mouse.GetState().Y);
+
 
             foreach (Emitter emitter in EmitterList)
             {
@@ -362,6 +400,14 @@ namespace PlatformLighting1
         
         protected override void Draw(GameTime gameTime)
         {
+            //************NOTE****************
+            //********************************
+            //THE ARTEFACTS ON THE 4TH LAYER FROM THE TOP (red stripe down the middle)
+            //ARE NOT CAUSED BY A SHADER PROBLEM OR MISTAKE. THEY'RE MINOR COMPRESSION ARTEFACTS
+            //FROM THE ORIGINAL TEXTURE JPEG. THEY'RE JUST AMPLIED BY THE SHADERS
+            //**************NOT YOUR FAULT**************
+
+
             #region Emissive
             #region Draw to emissive map
             GraphicsDevice.SetRenderTarget(EmissiveMap);
@@ -521,13 +567,19 @@ namespace PlatformLighting1
             GraphicsDevice.SetRenderTarget(CrepLightMap);
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
-            spriteBatch.Draw(CrepuscularLightTexture, Vector2.Zero, Color.White);
-            spriteBatch.Draw(ColorMap, ColorMap.Bounds, Color.Black);
+            foreach (CrepuscularLight light in CrepLightList)
+            {
+                spriteBatch.Draw(CrepuscularLightTexture, 
+                    new Rectangle((int)(light.Position.X), (int)(light.Position.Y), 
+                                  CrepuscularLightTexture.Width/3, CrepuscularLightTexture.Height/3), null, Color.Goldenrod, 0, new Vector2(CrepuscularLightTexture.Width/2, CrepuscularLightTexture.Height/2), SpriteEffects.None, 0);
+            }
+
+            //spriteBatch.Draw(ColorMap, ColorMap.Bounds, Color.Black);
             foreach (Sprite sprite in SpriteList)
             {
                 sprite.Draw(spriteBatch, Color.Black);
             }
-            
+
             foreach (Solid solid in SolidList)
             {
                 solid.Draw(spriteBatch, Color.Black);
@@ -597,11 +649,20 @@ namespace PlatformLighting1
             }
             else
             {
-                RaysEffect.Parameters["ColorMap"].SetValue(CrepColorMap);
-                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
-                RaysEffect.CurrentTechnique.Passes[0].Apply();
-                spriteBatch.Draw(CrepLightMap, FinalMap.Bounds, Color.White);
-                spriteBatch.End();
+                foreach (CrepuscularLight light in CrepLightList)
+                {
+                    RaysEffect.Parameters["LightPosition"].SetValue(light.Position / new Vector2(1280, 720));
+                    RaysEffect.Parameters["decay"].SetValue(light.Decay);
+                    RaysEffect.Parameters["exposure"].SetValue(light.Exposure);
+                    RaysEffect.Parameters["density"].SetValue(light.Density);
+                    RaysEffect.Parameters["weight"].SetValue(light.Weight);                    
+
+                    RaysEffect.Parameters["ColorMap"].SetValue(CrepColorMap);
+                    spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+                    RaysEffect.CurrentTechnique.Passes[0].Apply();
+                    spriteBatch.Draw(CrepLightMap, FinalMap.Bounds, Color.White);
+                    spriteBatch.End();
+                }
             }
             #endregion
             #endregion
