@@ -20,7 +20,8 @@ namespace PlatformLighting1
         SpriteBatch spriteBatch;
 
         RenderTarget2D EmissiveMap, BlurMap, ColorMap, NormalMap, LightMap, FinalMap, SpecMap, DepthMap, ShadowMap;
-        RenderTarget2D CrepLightMap, CrepColorMap;
+        RenderTarget2D CrepLightMap, CrepColorMap, OcclusionMap;
+        RenderTarget2D Buffer1, Buffer2;
 
         VertexPositionColorTexture[] LightVertices;
         VertexPositionColorTexture[] EmissiveVertices;
@@ -109,8 +110,34 @@ namespace PlatformLighting1
                 Weight = 0.358767f 
             });
 
+            CrepLightList.Add(new CrepuscularLight()
+            {
+                Position = new Vector2(1280 / 2, 720 / 2),
+                Decay = 0.9999f,
+                Exposure = 0.23f,
+                Density = 0.826f,
+                Weight = 0.358767f
+            });
+
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    CrepLightList.Add(new CrepuscularLight()
+            //    {
+            //        Position = new Vector2(Random.Next(0, 1280), Random.Next(0, 720)),
+            //        Decay = 0.9999f,
+            //        Exposure = 0.23f,
+            //        Density = 0.826f,
+            //        Weight = 0.358767f
+            //    });
+            //}
+
             HitEffectParticle = Content.Load<Texture2D>("HitEffectParticle");
             Glowball = Content.Load<Texture2D>("Glowball");
+
+            Buffer2 = new RenderTarget2D(GraphicsDevice, 1280, 720, false, SurfaceFormat.Rgba64, DepthFormat.None, 1, RenderTargetUsage.PreserveContents);
+            Buffer1 = new RenderTarget2D(GraphicsDevice, 1280, 720);
+
+            OcclusionMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
 
             EmissiveMap = new RenderTarget2D(GraphicsDevice, 1280, 720);
             BlurMap = new RenderTarget2D(GraphicsDevice, 1280, 720); 
@@ -363,7 +390,10 @@ namespace PlatformLighting1
             }
 
             LightList[1].Position = new Vector3(Mouse.GetState().X, Mouse.GetState().Y, 0);
+
             CrepLightList[0].Position = new Vector2(Mouse.GetState().X, Mouse.GetState().Y);
+            
+
 
 
             foreach (Emitter emitter in EmitterList)
@@ -398,7 +428,9 @@ namespace PlatformLighting1
 
             SpritePos += new Vector2(
                 (float)Math.Sin(2*(float)gameTime.TotalGameTime.TotalSeconds), 
-                (float)Math.Cos(4*(float)gameTime.TotalGameTime.TotalSeconds))*7;
+                (float)Math.Cos(4*(float)gameTime.TotalGameTime.TotalSeconds))*10;
+
+            CrepLightList[1].Position = SpritePos;
 
             PreviousKeyboardState = CurrentKeyboardState;
 
@@ -571,23 +603,17 @@ namespace PlatformLighting1
             spriteBatch.Begin();
             spriteBatch.Draw(EmissiveMap, ColorMap.Bounds, Color.White);
             spriteBatch.Draw(BlurMap, BlurMap.Bounds, Color.White);
+            foreach (Solid solid in SolidList)
+            {
+                solid.Draw(spriteBatch, Color.Black);
+            }
             spriteBatch.End();
             #endregion
 
-            #region Crepuscular LightMap
-            GraphicsDevice.SetRenderTarget(CrepLightMap);
-            GraphicsDevice.Clear(Color.Black);
+            #region Occlusion Map
+            GraphicsDevice.SetRenderTarget(OcclusionMap);
+            GraphicsDevice.Clear(Color.White);
             spriteBatch.Begin();
-            foreach (CrepuscularLight light in CrepLightList)
-            {
-                Color colp = LightList[CrepLightList.IndexOf(light) + 1].Color;
-
-                spriteBatch.Draw(CrepuscularLightTexture, 
-                    new Rectangle((int)(light.Position.X), (int)(light.Position.Y),
-                                  CrepuscularLightTexture.Width / 3, CrepuscularLightTexture.Height / 3), null, colp, 0, new Vector2(CrepuscularLightTexture.Width / 2, CrepuscularLightTexture.Height / 2), SpriteEffects.None, 0);
-            }
-
-            //spriteBatch.Draw(ColorMap, ColorMap.Bounds, Color.Black);
             foreach (Sprite sprite in SpriteList)
             {
                 sprite.Draw(spriteBatch, Color.Black);
@@ -596,23 +622,65 @@ namespace PlatformLighting1
             foreach (Solid solid in SolidList)
             {
                 solid.Draw(spriteBatch, Color.Black);
-            }            
+            }
             spriteBatch.End();
             #endregion
-            
+
             #region Crepuscular ColorMap
             GraphicsDevice.SetRenderTarget(CrepColorMap);
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Color.Transparent);
             spriteBatch.Begin();
-            spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
+            //spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
 
-            foreach (Solid solid in SolidList)
-            {
-                solid.Draw(spriteBatch, Color.Black);
-            }
-            spriteBatch.End(); 
+            //foreach (Solid solid in SolidList)
+            //{
+            //    solid.Draw(spriteBatch, Color.Black);
+            //}
+            spriteBatch.End();
             #endregion
-            
+
+
+            GraphicsDevice.SetRenderTarget(Buffer2);
+            GraphicsDevice.Clear(Color.Transparent);
+
+            RaysEffect.Parameters["ColorMap"].SetValue(CrepColorMap);
+            RaysEffect.Parameters["OccMap"].SetValue(OcclusionMap);
+
+            foreach (CrepuscularLight light in CrepLightList)
+            {
+                GraphicsDevice.SetRenderTarget(CrepLightMap);
+                GraphicsDevice.Clear(Color.Transparent);
+
+                spriteBatch.Begin();
+                spriteBatch.Draw(CrepuscularLightTexture, new Rectangle((int)(light.Position.X), (int)(light.Position.Y), CrepuscularLightTexture.Width / 3, CrepuscularLightTexture.Height / 3), null,
+                                     LightList[CrepLightList.IndexOf(light)].Color, 0, new Vector2(CrepuscularLightTexture.Width / 2, CrepuscularLightTexture.Height / 2), SpriteEffects.None, 0);
+                spriteBatch.End();
+
+                #region Buffer1
+                GraphicsDevice.SetRenderTarget(Buffer1);
+                GraphicsDevice.Clear(Color.Transparent);
+                {
+                    RaysEffect.Parameters["LightPosition"].SetValue(light.Position / new Vector2(1280, 720));
+                    RaysEffect.Parameters["decay"].SetValue(light.Decay);
+                    RaysEffect.Parameters["exposure"].SetValue(light.Exposure);
+                    RaysEffect.Parameters["density"].SetValue(light.Density);
+                    RaysEffect.Parameters["weight"].SetValue(light.Weight);
+
+                    spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+                    RaysEffect.CurrentTechnique.Passes[0].Apply();
+
+                    spriteBatch.Draw(CrepLightMap, CrepLightMap.Bounds, Color.White);
+                    spriteBatch.End();
+                }
+
+                GraphicsDevice.SetRenderTarget(Buffer2);
+
+                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+                spriteBatch.Draw(Buffer1, Buffer1.Bounds, Color.White);
+                spriteBatch.End();
+                #endregion
+            }
+
             #region Draw to the BackBuffer
             GraphicsDevice.SetRenderTarget(null);
             GraphicsDevice.Clear(Color.Black);
@@ -628,7 +696,7 @@ namespace PlatformLighting1
                 spriteBatch.Draw(DepthMap, new Rectangle(320, 0, 320, 180), Color.White);
                 spriteBatch.Draw(LightMap, new Rectangle(320, 180, 320, 180), Color.White);
                 spriteBatch.Draw(FinalMap, new Rectangle(320, 360, 320, 180), Color.White);
-                spriteBatch.Draw(CrepLightMap, new Rectangle(320, 540, 320, 180), Color.White);
+                spriteBatch.Draw(Buffer2, new Rectangle(320, 540, 320, 180), Color.White);
 
                 spriteBatch.Draw(CrepColorMap, new Rectangle(640, 0, 320, 180), Color.White);
                 spriteBatch.Draw(ColorMap, new Rectangle(640, 180, 320, 180), Color.White);
@@ -646,22 +714,11 @@ namespace PlatformLighting1
             #endregion
             else
             {
-                foreach (CrepuscularLight light in CrepLightList)
-                {
-                    RaysEffect.Parameters["LightPosition"].SetValue(light.Position / new Vector2(1280, 720));
-                    RaysEffect.Parameters["decay"].SetValue(light.Decay);
-                    RaysEffect.Parameters["exposure"].SetValue(light.Exposure);
-                    RaysEffect.Parameters["density"].SetValue(light.Density);
-                    RaysEffect.Parameters["weight"].SetValue(light.Weight);
-                    RaysEffect.Parameters["ColorMap"].SetValue(CrepColorMap);
+                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive);
+                spriteBatch.Draw(FinalMap, FinalMap.Bounds, Color.White);
+                spriteBatch.Draw(Buffer2, FinalMap.Bounds, Color.White);
 
-                    spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
-
-                    RaysEffect.CurrentTechnique.Passes[0].Apply();
-                    spriteBatch.Draw(CrepLightMap, FinalMap.Bounds, Color.White);
-
-                    spriteBatch.End();
-                }
+                spriteBatch.End();                
             }
             
             #endregion
