@@ -205,11 +205,15 @@ namespace PlatformLighting1
 
             LightList.Add(new Light()
             {
-                Color = Color.Goldenrod,
+                //Color = new Color(141, 38, 10, 42),
+                //Color = new Color(10, 25, 70, 5),
+                //Color = Color.DarkSeaGreen,
+                Color = Color.Silver,
+                //Color = Color.Plum,
                 //Color = new Color(141, 38, 10, 42),
                 //Color = Color.White,
                 Active = true,
-                Power = 1.8f,
+                Power = 0.8f,
                 Position = new Vector3(200, 100, 100),
                 Size = 400
             });
@@ -576,9 +580,11 @@ namespace PlatformLighting1
             spriteBatch.Begin();
             foreach (CrepuscularLight light in CrepLightList)
             {
+                Color colp = LightList[CrepLightList.IndexOf(light) + 1].Color;
+
                 spriteBatch.Draw(CrepuscularLightTexture, 
-                    new Rectangle((int)(light.Position.X), (int)(light.Position.Y), 
-                                  CrepuscularLightTexture.Width/3, CrepuscularLightTexture.Height/3), null, Color.Goldenrod, 0, new Vector2(CrepuscularLightTexture.Width/2, CrepuscularLightTexture.Height/2), SpriteEffects.None, 0);
+                    new Rectangle((int)(light.Position.X), (int)(light.Position.Y),
+                                  CrepuscularLightTexture.Width / 3, CrepuscularLightTexture.Height / 3), null, colp, 0, new Vector2(CrepuscularLightTexture.Width / 2, CrepuscularLightTexture.Height / 2), SpriteEffects.None, 0);
             }
 
             //spriteBatch.Draw(ColorMap, ColorMap.Bounds, Color.Black);
