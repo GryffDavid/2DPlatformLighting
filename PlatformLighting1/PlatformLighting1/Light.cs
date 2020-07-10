@@ -11,8 +11,7 @@ namespace PlatformLighting1
     {
         public Vector3 Position;
         public Color Color;
-        public float Power;
-        public int LightDecay;
+        public float Power, Size;
         public bool Active;
 
         public Light()

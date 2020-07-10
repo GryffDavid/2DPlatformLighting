@@ -1,14 +1,3 @@
-float screenWidth;
-float screenHeight;
-float4 ambientColor;
-
-float lightStrength;
-float lightDecay;
-float3 lightPosition;
-float4 lightColor;
-float lightRadius;
-float specularStrength;
-
 Texture NormalMap;
 sampler NormalMapSampler = sampler_state {
 	texture = <NormalMap>;
@@ -61,6 +50,11 @@ VertexToPixel MyVertexShader(float4 inPos: POSITION0, float2 texCoord: TEXCOORD0
 float2 iResolution = float2(1280, 720);
 float4 backColor = float4(0.25, 0.25, 0.25, 1.0);
 float4 shapeColor = float4(1.0, 0.4, 0.0, 1.0);
+
+float3 LightPosition;
+float4 LightColor, AmbientColor;
+float LightPower, LightSize;
+
 
 //////////////////
 //Dist functions//
@@ -164,7 +158,7 @@ void setLuminance(inout float4 col, float lum)
 
 //MAIN SCENE
 
-float4 ambientLight = float4(0.005, 0.005, 0.005, 1);
+//float4 ambientLight = float4(0.05, 0.05, 0.05, 1);
 float3 halfVec = float3(0, 0, 1);
 
 PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
@@ -184,36 +178,21 @@ PixelToFrame PointLightShader(VertexToPixel PSIn) : COLOR0
 	
 	
 	float dist = sceneDist(p);
-	float4 col = ambientLight;
+	float4 col = AmbientColor;
 
 
-	float2 light1Pos = float2(lightPosition.x, lightPosition.y);
-	float4 light1Col = float4(1.0, 0.9, 0.5, 1);
-
-	float2 light2Pos = float2(250, 250);
-	float4 light2Col = float4(0.1, 1, 0.9, 1);
-
-	
+	float2 light1Pos = float2(LightPosition.x, LightPosition.y);
+	float4 light1Col = LightColor;
 	
 	//Get the direction of the current pixel from the center of the light
 	float3 lightDirNorm = normalize(float3(light1Pos, 0) - float3(p.x, p.y, -25));	
 	float amount = max(dot(normal, lightDirNorm), 0);		
 	float3 reflect = normalize(2.0 * amount * normal - lightDirNorm);
 	float specular = min(pow(saturate(dot(reflect, halfVec)), 0.01 * 255), amount); 
-	setLuminance(light1Col, 1.7);
+	setLuminance(light1Col, LightPower);
 
-	col += drawLight(p, light1Pos, light1Col, dist, 800.0, 1.0) * specular;
-
-
-	//Get the direction of the current pixel from the center of the light
-	lightDirNorm = normalize(float3(light2Pos, 0) - float3(p.x, p.y, -25));	
-	amount = max(dot(normal, lightDirNorm), 0);		
-	reflect = normalize(2.0 * amount * normal - lightDirNorm);
-	specular = min(pow(saturate(dot(reflect, halfVec)), 0.005 * 255), amount);
-	setLuminance(light1Col, 0.7);
-
-	col += drawLight(p, light2Pos, light2Col, dist, 400.0, 1.0) * specular;
-
+	col += drawLight(p, light1Pos, light1Col, dist, LightSize, 1.0) * specular;
+	
 	col = lerp(col, col, clamp(-dist, 0.0, 1.0));
 	
     Output.Color = clamp(col, 0.0, 1.0);

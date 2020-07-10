@@ -25,6 +25,8 @@ namespace PlatformLighting1
         VertexPositionColorTexture[] EmissiveVertices;
         VertexBuffer EmissiveVertexBuffer;
 
+        static Random Random = new Random();
+
         #region Sprites
         Texture2D Sprite, HealDrone, HealDroneEmissive, HealDroneNormal, Texture, NormalTexture;
         Texture2D CrepuscularLightTexture;
@@ -97,6 +99,9 @@ namespace PlatformLighting1
             BlurEffect = Content.Load<Effect>("Blur");
             LightCombined = Content.Load<Effect>("LightCombined");
             LightEffect = Content.Load<Effect>("LightEffect");
+            LightEffect.Parameters["AmbientColor"].SetValue(new Vector4(0.0015f, 0.0015f, 0.0015f, 1.0f));
+
+
 
             RaysEffect = Content.Load<Effect>("Crepuscular");
             
@@ -126,14 +131,54 @@ namespace PlatformLighting1
 
             LightList.Add(new Light()
             {
+                Color = Color.HotPink,
+                Active = true,
+                Power = 0.87f,
+                Position = new Vector3(100, 100, 250),
+                Size = 800
+            });
+
+            LightList.Add(new Light()
+            {
                 Color = Color.White,
                 Active = true,
-                LightDecay = 999999999,
-                Power = 0.0000001f,
-                Position = new Vector3(100, 100, 250)
+                Power = 0.7f,
+                Position = new Vector3(100, 100, 250),
+                Size = 1200
             });
+
+            LightList.Add(new Light()
+            {
+                Color = Color.Green,
+                Active = true,
+                Power = 1.2f,
+                Position = new Vector3(800, 350, 250),
+                Size = 400
+            });
+
+            LightList.Add(new Light()
+            {
+                Color = Color.DeepSkyBlue,
+                Active = true,
+                Power = 0.2f,
+                Position = new Vector3(500, 650, 100),
+                Size = 1200
+            });
+
+
+            for (int i = 0; i < 30; i++)
+            {
+                LightList.Add(new Light()
+                {
+                    Color = new Color(Random.Next(0, 255), Random.Next(0, 255), Random.Next(0, 255), Random.Next(0, 255)),
+                    Active = true,
+                    Power = (float)Random.NextDouble(),
+                    Position = new Vector3(Random.Next(0, 1280), Random.Next(0, 720), Random.Next(10, 400)),
+                    Size = Random.Next(50, 600)
+                });
+            }
         }
-        
+
         protected override void UnloadContent()
         {
 
@@ -235,18 +280,16 @@ namespace PlatformLighting1
             {
                 GraphicsDevice.SetVertexBuffer(LightVertexBuffer);
 
-                LightEffect.Parameters["lightStrength"].SetValue(light.Power);
-                LightEffect.Parameters["lightPosition"].SetValue(light.Position);
-                LightEffect.Parameters["lightColor"].SetValue(ColorToVector(light.Color));
-                LightEffect.Parameters["lightDecay"].SetValue(light.LightDecay);
-                LightEffect.Parameters["specularStrength"].SetValue(specularStrength);
+                LightEffect.Parameters["LightPosition"].SetValue(light.Position);
+                LightEffect.Parameters["LightColor"].SetValue(ColorToVector(light.Color));
+                LightEffect.Parameters["LightPower"].SetValue(light.Power);
+                LightEffect.Parameters["LightSize"].SetValue(light.Size);
+
+
 
                 LightEffect.CurrentTechnique = LightEffect.Techniques["DeferredPointLight"];
-
-                LightEffect.Parameters["screenWidth"].SetValue(1280);
-                LightEffect.Parameters["screenHeight"].SetValue(720);
-
-                LightEffect.Parameters["ambientColor"].SetValue(AmbientLight.ToVector4());
+                
+                //LightEffect.Parameters["ambientColor"].SetValue(AmbientLight.ToVector4());
 
                 LightEffect.Parameters["NormalMap"].SetValue(NormalMap);
                 LightEffect.Parameters["ColorMap"].SetValue(ColorMap);
